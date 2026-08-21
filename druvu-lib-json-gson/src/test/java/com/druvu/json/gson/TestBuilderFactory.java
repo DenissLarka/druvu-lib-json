@@ -15,19 +15,6 @@
  */
 package com.druvu.json.gson;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.text.ParseException;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.druvu.json.AbstractMapper;
 import com.druvu.json.JsonArrayBuilder;
 import com.druvu.json.JsonBuilder;
@@ -38,301 +25,394 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.text.ParseException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 public class TestBuilderFactory {
 
-	@Test
-	public void testBuildObject() throws IOException, ParseException {
+    @Test
+    public void testBuildObject() throws IOException, ParseException {
 
-		JsonObject jsonObject = (JsonObject) JsonBuilderFactory.buildObject().addNull("null").add("string", "1")
-				.add("stringNull", (String) null).add("number", 2).add("numberNull", (Float) null).add("boolean", true)
-				.add("booleanNull", (Boolean) null).add("character", 'c').add("characterNull", (Character) null).addObject("obj")
-				.add("NP1", 4).end().addArray("arr").addObject().end().add("AE1").end().getJson();
+        JsonObject jsonObject = (JsonObject) JsonBuilderFactory.buildObject()
+                .addNull("null")
+                .add("string", "1")
+                .add("stringNull", (String) null)
+                .add("number", 2)
+                .add("numberNull", (Float) null)
+                .add("boolean", true)
+                .add("booleanNull", (Boolean) null)
+                .add("character", 'c')
+                .add("characterNull", (Character) null)
+                .addObject("obj")
+                .add("NP1", 4)
+                .end()
+                .addArray("arr")
+                .addObject()
+                .end()
+                .add("AE1")
+                .end()
+                .getJson();
 
-		JsonElement test = JsonParser
-				.parseString("{\"null\":null, \"string\":\"1\",\"stringNull\":null,\"number\":2,\"numberNull\":null,\"boolean\":true,\"booleanNull\":null,\"character\":'c',\"characterNull\":null,\"obj\":{\"NP1\":4},\"arr\":[{},\"AE1\"]}");
-		Assert.assertEquals(test, jsonObject);
+        JsonElement test = JsonParser.parseString(
+                "{\"null\":null, \"string\":\"1\",\"stringNull\":null,\"number\":2,\"numberNull\":null,\"boolean\":true,\"booleanNull\":null,\"character\":'c',\"characterNull\":null,\"obj\":{\"NP1\":4},\"arr\":[{},\"AE1\"]}");
+        Assert.assertEquals(test, jsonObject);
+    }
 
-	}
+    @Test
+    public void testSerialization() throws IOException, ParseException {
+        Date date = new Date(0);
 
-	@Test
-	public void testSerialization() throws IOException, ParseException {
-		Date date = new Date(0);
+        Instant instant = Instant.ofEpochMilli(0);
+        LocalDate localDate = LocalDate.of(0, 1, 1);
+        JsonObjectBuilder<?, ?> builder = JsonBuilderFactory.buildObject()
+                .add("Prop1", "1")
+                .add("Prop2", 2)
+                .addNull("Prop3")
+                .add("Prop4", (String) null)
+                .addObject("Prop5")
+                .add("NP1", 4)
+                .end()
+                .addArray("Foo")
+                .addObject()
+                .end()
+                .add("AE1")
+                .end()
+                .add("Prop6", date)
+                .add("Prop7", instant)
+                .add("Prop8", localDate);
 
-		Instant instant = Instant.ofEpochMilli(0);
-		LocalDate localDate = LocalDate.of(0, 1, 1);
-		JsonObjectBuilder<?, ?> builder = JsonBuilderFactory.buildObject().add("Prop1", "1").add("Prop2", 2)
-				.addNull("Prop3").add("Prop4", (String) null).addObject("Prop5").add("NP1", 4).end().addArray("Foo").addObject()
-				.end().add("AE1").end().add("Prop6", date).add("Prop7", instant).add("Prop8", localDate);
+        StringWriter writer = new StringWriter();
+        builder.write(writer);
+        Assert.assertEquals(
+                "{\"Prop1\":\"1\",\"Prop2\":2,\"Prop3\":null,\"Prop4\":null,\"Prop5\":{\"NP1\":4},\"Foo\":[{},\"AE1\"],\"Prop6\":\"1970-01-01T00:00Z\",\"Prop7\":\"1970-01-01T00:00:00Z\",\"Prop8\":\"0000-01-01\"}",
+                builder.toString());
+        Assert.assertEquals(
+                "{\"Prop1\":\"1\",\"Prop2\":2,\"Prop3\":null,\"Prop4\":null,\"Prop5\":{\"NP1\":4},\"Foo\":[{},\"AE1\"],\"Prop6\":\"1970-01-01T00:00Z\",\"Prop7\":\"1970-01-01T00:00:00Z\",\"Prop8\":\"0000-01-01\"}",
+                writer.toString());
+    }
 
-		StringWriter writer = new StringWriter();
-		builder.write(writer);
-		Assert.assertEquals(
-				"{\"Prop1\":\"1\",\"Prop2\":2,\"Prop3\":null,\"Prop4\":null,\"Prop5\":{\"NP1\":4},\"Foo\":[{},\"AE1\"],\"Prop6\":\"1970-01-01T00:00Z\",\"Prop7\":\"1970-01-01T00:00:00Z\",\"Prop8\":\"0000-01-01\"}",
-				builder.toString());
-		Assert.assertEquals(
-				"{\"Prop1\":\"1\",\"Prop2\":2,\"Prop3\":null,\"Prop4\":null,\"Prop5\":{\"NP1\":4},\"Foo\":[{},\"AE1\"],\"Prop6\":\"1970-01-01T00:00Z\",\"Prop7\":\"1970-01-01T00:00:00Z\",\"Prop8\":\"0000-01-01\"}",
-				writer.toString());
+    @Test
+    public void testBuildArray() throws IOException, ParseException {
 
-	}
+        JsonArray jsonObject = (JsonArray) JsonBuilderFactory.buildArray()
+                .addNull()
+                .add("1")
+                .add((String) null)
+                .add(2)
+                .add((Float) null)
+                .add('c')
+                .add((Character) null)
+                .add(true)
+                .add((Boolean) null)
+                .addObject()
+                .add("NP1", 4)
+                .end()
+                .addArray()
+                .addObject()
+                .end()
+                .add("AE1")
+                .end()
+                .getJson();
 
-	@Test
-	public void testBuildArray() throws IOException, ParseException {
+        JsonElement test =
+                JsonParser.parseString("[null, \"1\", null, 2, null, 'c', null, true, null,{\"NP1\":4},[{},\"AE1\"]]");
+        Assert.assertEquals(test, jsonObject);
+    }
 
-		JsonArray jsonObject = (JsonArray) JsonBuilderFactory.buildArray().addNull().add("1").add((String) null).add(2)
-				.add((Float) null).add('c').add((Character) null).add(true).add((Boolean) null).addObject().add("NP1", 4).end()
-				.addArray().addObject().end().add("AE1").end().getJson();
+    public static class A {
+        String b = "hello";
+        String c = "world";
+    }
 
-		JsonElement test = JsonParser.parseString("[null, \"1\", null, 2, null, 'c', null, true, null,{\"NP1\":4},[{},\"AE1\"]]");
-		Assert.assertEquals(test, jsonObject);
-	}
+    @Test
+    public void testTransformationObject() throws IOException, ParseException {
+        A a = new A();
 
-	public static class A {
-		String b = "hello";
-		String c = "world";
-	}
+        JsonObject jsonObject = (JsonObject) JsonBuilderFactory.buildObject()
+                .add(
+                        "value",
+                        new AbstractMapper<A>() {
 
-	@Test
-	public void testTransformationObject() throws IOException, ParseException {
-		A a = new A();
+                            @Override
+                            public JsonBuilder map(A t) {
+                                return buildObject().add("b", t.b).add("c", t.c);
+                            }
+                        },
+                        a)
+                .getJson();
+        JsonElement test = JsonParser.parseString("{\"value\":{\"b\":\"hello\",\"c\":\"world\"}}");
+        Assert.assertEquals(test, jsonObject);
+    }
 
-		JsonObject jsonObject = (JsonObject) JsonBuilderFactory.buildObject().add("value", new AbstractMapper<A>() {
+    @Test
+    public void testTransformationArrayInObject() throws IOException, ParseException {
+        List<A> aList = Arrays.asList(new A[] {new A(), new A()});
 
-			@Override
-			public JsonBuilder map(A t) {
-				return buildObject().add("b", t.b).add("c", t.c);
-			}
-		}, a).getJson();
-		JsonElement test = JsonParser.parseString("{\"value\":{\"b\":\"hello\",\"c\":\"world\"}}");
-		Assert.assertEquals(test, jsonObject);
-	}
+        JsonObject jsonObject = (JsonObject) JsonBuilderFactory.buildObject()
+                .add(
+                        "value",
+                        new AbstractMapper<A>() {
 
-	@Test
-	public void testTransformationArrayInObject() throws IOException, ParseException {
-		List<A> aList = Arrays.asList(new A[] { new A(), new A() });
+                            @Override
+                            public JsonBuilder map(A t) {
+                                return buildObject().add("b", t.b).add("c", t.c);
+                            }
+                        },
+                        aList)
+                .getJson();
+        JsonElement test = JsonParser.parseString(
+                "{\"value\":[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]}");
+        Assert.assertEquals(test, jsonObject);
+    }
 
-		JsonObject jsonObject = (JsonObject) JsonBuilderFactory.buildObject().add("value", new AbstractMapper<A>() {
+    @Test
+    public void testTransformationObjectInArray() throws IOException, ParseException {
 
-			@Override
-			public JsonBuilder map(A t) {
-				return buildObject().add("b", t.b).add("c", t.c);
-			}
-		}, aList).getJson();
-		JsonElement test = JsonParser
-				.parseString("{\"value\":[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]}");
-		Assert.assertEquals(test, jsonObject);
-	}
+        JsonArray jsonArray = (JsonArray) JsonBuilderFactory.buildArray()
+                .add(
+                        new AbstractMapper<A>() {
 
-	@Test
-	public void testTransformationObjectInArray() throws IOException, ParseException {
+                            @Override
+                            public JsonBuilder map(A t) {
+                                return buildObject().add("b", t.b).add("c", t.c);
+                            }
+                        },
+                        new A())
+                .getJson();
+        JsonElement test = JsonParser.parseString("[{\"b\":\"hello\",\"c\":\"world\"}]");
+        Assert.assertEquals(test, jsonArray);
+    }
 
-		JsonArray jsonArray = (JsonArray) JsonBuilderFactory.buildArray().add(new AbstractMapper<A>() {
+    @Test
+    public void testTransformationArrayInArray() throws IOException, ParseException {
+        List<A> aList = Arrays.asList(new A[] {new A(), new A()});
 
-			@Override
-			public JsonBuilder map(A t) {
-				return buildObject().add("b", t.b).add("c", t.c);
-			}
-		}, new A()).getJson();
-		JsonElement test = JsonParser.parseString("[{\"b\":\"hello\",\"c\":\"world\"}]");
-		Assert.assertEquals(test, jsonArray);
-	}
+        JsonArray jsonArray = (JsonArray) JsonBuilderFactory.buildArray()
+                .add(
+                        new AbstractMapper<A>() {
 
-	@Test
-	public void testTransformationArrayInArray() throws IOException, ParseException {
-		List<A> aList = Arrays.asList(new A[] { new A(), new A() });
+                            @Override
+                            public JsonBuilder map(A t) {
+                                return buildObject().add("b", t.b).add("c", t.c);
+                            }
+                        },
+                        aList)
+                .getJson();
+        JsonElement test =
+                JsonParser.parseString("[[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]]");
+        Assert.assertEquals(test, jsonArray);
+    }
 
-		JsonArray jsonArray = (JsonArray) JsonBuilderFactory.buildArray().add(new AbstractMapper<A>() {
+    @Test
+    public void testTransformationArray() throws IOException, ParseException {
+        List<A> aList = Arrays.asList(new A[] {new A(), new A()});
 
-			@Override
-			public JsonBuilder map(A t) {
-				return buildObject().add("b", t.b).add("c", t.c);
-			}
-		}, aList).getJson();
-		JsonElement test = JsonParser.parseString("[[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]]");
-		Assert.assertEquals(test, jsonArray);
-	}
+        JsonArray jsonArray = (JsonArray) JsonBuilderFactory.buildArray(
+                        new AbstractMapper<A>() {
 
-	@Test
-	public void testTransformationArray() throws IOException, ParseException {
-		List<A> aList = Arrays.asList(new A[] { new A(), new A() });
+                            @Override
+                            public JsonBuilder map(A t) {
+                                return buildObject().add("b", t.b).add("c", t.c);
+                            }
+                        },
+                        aList)
+                .getJson();
+        JsonElement test =
+                JsonParser.parseString("[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]");
+        Assert.assertEquals(test, jsonArray);
+    }
 
-		JsonArray jsonArray = (JsonArray) JsonBuilderFactory.buildArray(new AbstractMapper<A>() {
+    @Test
+    public void testAddJsonBuildersOnArray() throws IOException, ParseException {
+        List<? extends JsonBuilder> aList = Arrays.asList(
+                JsonBuilderFactory.buildObject().add("b", "hello").add("c", "world"),
+                JsonBuilderFactory.buildObject().add("b", "hello").add("c", "world"));
 
-			@Override
-			public JsonBuilder map(A t) {
-				return buildObject().add("b", t.b).add("c", t.c);
-			}
-		}, aList).getJson();
-		JsonElement test = JsonParser.parseString("[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]");
-		Assert.assertEquals(test, jsonArray);
-	}
+        JsonArray jsonArray =
+                (JsonArray) JsonBuilderFactory.buildArray().add(aList).getJson();
+        JsonElement test =
+                JsonParser.parseString("[[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]]");
+        Assert.assertEquals(test, jsonArray);
+    }
 
-	@Test
-	public void testAddJsonBuildersOnArray() throws IOException, ParseException {
-		List<? extends JsonBuilder> aList = Arrays.asList(JsonBuilderFactory.buildObject().add("b", "hello").add("c", "world"),
-				JsonBuilderFactory.buildObject().add("b", "hello").add("c", "world"));
+    @Test
+    public void testAddJsonBuildersOnObject() throws IOException, ParseException {
+        List<? extends JsonBuilder> aList = Arrays.asList(
+                JsonBuilderFactory.buildObject().add("b", "hello").add("c", "world"),
+                JsonBuilderFactory.buildObject().add("b", "hello").add("c", "world"));
 
-		JsonArray jsonArray = (JsonArray) JsonBuilderFactory.buildArray().add(aList).getJson();
-		JsonElement test = JsonParser.parseString("[[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]]");
-		Assert.assertEquals(test, jsonArray);
-	}
+        JsonObject jsonArray =
+                (JsonObject) JsonBuilderFactory.buildObject().add("val", aList).getJson();
+        JsonElement test = JsonParser.parseString(
+                "{\"val\":[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]}");
+        Assert.assertEquals(test, jsonArray);
+    }
 
-	@Test
-	public void testAddJsonBuildersOnObject() throws IOException, ParseException {
-		List<? extends JsonBuilder> aList = Arrays.asList(JsonBuilderFactory.buildObject().add("b", "hello").add("c", "world"),
-				JsonBuilderFactory.buildObject().add("b", "hello").add("c", "world"));
+    @Test
+    public void testAddAllJsonBuildersOnArray() throws IOException, ParseException {
+        List<? extends JsonBuilder> aList = Arrays.asList(
+                JsonBuilderFactory.buildObject().add("b", "hello").add("c", "world"),
+                JsonBuilderFactory.buildObject().add("b", "hello").add("c", "world"));
 
-		JsonObject jsonArray = (JsonObject) JsonBuilderFactory.buildObject().add("val", aList).getJson();
-		JsonElement test = JsonParser
-				.parseString("{\"val\":[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]}");
-		Assert.assertEquals(test, jsonArray);
-	}
+        JsonArray jsonArray =
+                (JsonArray) JsonBuilderFactory.buildArray().addAll(aList).getJson();
+        JsonElement test =
+                JsonParser.parseString("[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]");
+        Assert.assertEquals(test, jsonArray);
+    }
 
-	@Test
-	public void testAddAllJsonBuildersOnArray() throws IOException, ParseException {
-		List<? extends JsonBuilder> aList = Arrays.asList(JsonBuilderFactory.buildObject().add("b", "hello").add("c", "world"),
-				JsonBuilderFactory.buildObject().add("b", "hello").add("c", "world"));
+    @Test
+    public void testTransformationArrayAddAll() throws IOException, ParseException {
+        List<A> aList = Arrays.asList(new A[] {new A(), new A()});
 
-		JsonArray jsonArray = (JsonArray) JsonBuilderFactory.buildArray().addAll(aList).getJson();
-		JsonElement test = JsonParser.parseString("[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]");
-		Assert.assertEquals(test, jsonArray);
-	}
+        JsonArray jsonArray = (JsonArray) JsonBuilderFactory.buildArray()
+                .addAll(
+                        new AbstractMapper<A>() {
 
-	@Test
-	public void testTransformationArrayAddAll() throws IOException, ParseException {
-		List<A> aList = Arrays.asList(new A[] { new A(), new A() });
+                            @Override
+                            public JsonBuilder map(A t) {
+                                return buildObject().add("b", t.b).add("c", t.c);
+                            }
+                        },
+                        aList)
+                .getJson();
+        JsonElement test =
+                JsonParser.parseString("[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]");
+        Assert.assertEquals(test, jsonArray);
+    }
 
-		JsonArray jsonArray = (JsonArray) JsonBuilderFactory.buildArray().addAll(new AbstractMapper<A>() {
+    @Test
+    public void testAddArrayOfPrimitives() {
+        List<String> likes = Arrays.asList("chicken", "pasta");
+        JsonObject json = (JsonObject) JsonBuilderFactory.buildObject()
+                .add("name", "Joe")
+                .add("tastes", JsonBuilderFactory.buildArray().addAll(Mapper.STRING, likes))
+                .getJson();
+        Assert.assertEquals("{\"name\":\"Joe\",\"tastes\":[\"chicken\",\"pasta\"]}", json.toString());
+    }
 
-			@Override
-			public JsonBuilder map(A t) {
-				return buildObject().add("b", t.b).add("c", t.c);
-			}
-		}, aList).getJson();
-		JsonElement test = JsonParser.parseString("[{\"b\":\"hello\",\"c\":\"world\"}, {\"b\":\"hello\",\"c\":\"world\"}]");
-		Assert.assertEquals(test, jsonArray);
-	}
+    @Test
+    public void testPrimitiveBuilderSerializes() {
+        Assert.assertEquals("42", JsonBuilderFactory.buildPrimitive(42).toString());
+        Assert.assertEquals("\"x\"", JsonBuilderFactory.buildPrimitive("x").toString());
+        Assert.assertEquals(
+                "null", JsonBuilderFactory.buildPrimitive((Boolean) null).toString());
+    }
 
-	@Test
-	public void testAddArrayOfPrimitives() {
-		List<String> likes = Arrays.asList("chicken", "pasta");
-		JsonObject json = (JsonObject) JsonBuilderFactory.buildObject()
-				.add("name", "Joe")
-				.add("tastes", JsonBuilderFactory.buildArray().addAll(Mapper.STRING, likes))
-				.getJson();
-		Assert.assertEquals("{\"name\":\"Joe\",\"tastes\":[\"chicken\",\"pasta\"]}", json.toString());
+    @Test
+    public void testExplicitBackendTypedRoot() {
+        JsonBuilderFactory.Backend<JsonElement> backend = new GsonBackend();
+        JsonElement json = JsonBuilderFactory.buildObject(backend)
+                .add("name", "Alice")
+                .add("age", 30)
+                .getJson();
+        Assert.assertEquals(JsonParser.parseString("{\"name\":\"Alice\",\"age\":30}"), json);
+    }
 
-	}
+    @Test
+    public void testMixedBackendsRejected() {
+        JsonArrayBuilder<?, JsonElement> array = JsonBuilderFactory.buildArray(new OtherBackend());
+        JsonBuilder other = JsonBuilderFactory.buildObject(new GsonBackend()).add("a", 1);
 
-	@Test
-	public void testPrimitiveBuilderSerializes() {
-		Assert.assertEquals("42", JsonBuilderFactory.buildPrimitive(42).toString());
-		Assert.assertEquals("\"x\"", JsonBuilderFactory.buildPrimitive("x").toString());
-		Assert.assertEquals("null", JsonBuilderFactory.buildPrimitive((Boolean) null).toString());
-	}
+        IllegalArgumentException e = Assert.expectThrows(IllegalArgumentException.class, () -> array.add(other));
+        Assert.assertTrue(e.getMessage().contains("Cannot mix backends"), e.getMessage());
+    }
 
-	@Test
-	public void testExplicitBackendTypedRoot() {
-		JsonBuilderFactory.Backend<JsonElement> backend = new GsonBackend();
-		JsonElement json = JsonBuilderFactory.buildObject(backend).add("name", "Alice").add("age", 30).getJson();
-		Assert.assertEquals(JsonParser.parseString("{\"name\":\"Alice\",\"age\":30}"), json);
-	}
+    /** Behaves exactly like GsonBackend but is a different class, which is what the mixing guard keys on. */
+    private static final class OtherBackend implements JsonBuilderFactory.Backend<JsonElement> {
+        private final GsonBackend delegate = new GsonBackend();
 
-	@Test
-	public void testMixedBackendsRejected() {
-		JsonArrayBuilder<?, JsonElement> array = JsonBuilderFactory.buildArray(new OtherBackend());
-		JsonBuilder other = JsonBuilderFactory.buildObject(new GsonBackend()).add("a", 1);
+        @Override
+        public JsonElement newObject() {
+            return delegate.newObject();
+        }
 
-		IllegalArgumentException e = Assert.expectThrows(IllegalArgumentException.class, () -> array.add(other));
-		Assert.assertTrue(e.getMessage().contains("Cannot mix backends"), e.getMessage());
-	}
+        @Override
+        public JsonElement newArray() {
+            return delegate.newArray();
+        }
 
-	/**
-	 * Behaves exactly like GsonBackend but is a different class, which is what the
-	 * mixing guard keys on.
-	 */
-	private static final class OtherBackend implements JsonBuilderFactory.Backend<JsonElement> {
-		private final GsonBackend delegate = new GsonBackend();
+        @Override
+        public JsonElement nullNode() {
+            return delegate.nullNode();
+        }
 
-		@Override
-		public JsonElement newObject() {
-			return delegate.newObject();
-		}
+        @Override
+        public JsonElement of(String value) {
+            return delegate.of(value);
+        }
 
-		@Override
-		public JsonElement newArray() {
-			return delegate.newArray();
-		}
+        @Override
+        public JsonElement of(Number value) {
+            return delegate.of(value);
+        }
 
-		@Override
-		public JsonElement nullNode() {
-			return delegate.nullNode();
-		}
+        @Override
+        public JsonElement of(Boolean value) {
+            return delegate.of(value);
+        }
 
-		@Override
-		public JsonElement of(String value) {
-			return delegate.of(value);
-		}
+        @Override
+        public void setProperty(JsonElement objectNode, String key, JsonElement value) {
+            delegate.setProperty(objectNode, key, value);
+        }
 
-		@Override
-		public JsonElement of(Number value) {
-			return delegate.of(value);
-		}
+        @Override
+        public void addElement(JsonElement arrayNode, JsonElement element) {
+            delegate.addElement(arrayNode, element);
+        }
 
-		@Override
-		public JsonElement of(Boolean value) {
-			return delegate.of(value);
-		}
+        @Override
+        public String serialize(JsonElement node) {
+            return delegate.serialize(node);
+        }
 
-		@Override
-		public void setProperty(JsonElement objectNode, String key, JsonElement value) {
-			delegate.setProperty(objectNode, key, value);
-		}
+        @Override
+        public void write(JsonElement node, Writer out) throws IOException {
+            delegate.write(node, out);
+        }
+    }
 
-		@Override
-		public void addElement(JsonElement arrayNode, JsonElement element) {
-			delegate.addElement(arrayNode, element);
-		}
+    /**
+     * A key holds one value: the object-side Mapper overload takes a single object and assigns it as a scalar, while
+     * the Iterable overload assigns an array. Passing several objects for one key used to compile and silently keep
+     * only the last; it is now a compile error.
+     */
+    @Test
+    public void testMapperSingleObjectVersusIterableOnObject() {
+        Assert.assertEquals(
+                JsonBuilderFactory.buildObject().add("k", Mapper.STRING, "a").toString(), "{\"k\":\"a\"}");
+        Assert.assertEquals(
+                JsonBuilderFactory.buildObject()
+                        .add("k", Mapper.STRING, List.of("a", "b", "c"))
+                        .toString(),
+                "{\"k\":[\"a\",\"b\",\"c\"]}");
+    }
 
-		@Override
-		public String serialize(JsonElement node) {
-			return delegate.serialize(node);
-		}
-
-		@Override
-		public void write(JsonElement node, Writer out) throws IOException {
-			delegate.write(node, out);
-		}
-	}
-
-	/**
-	 * A key holds one value: the object-side Mapper overload takes a single object and
-	 * assigns it as a scalar, while the Iterable overload assigns an array. Passing
-	 * several objects for one key used to compile and silently keep only the last;
-	 * it is now a compile error.
-	 */
-	@Test
-	public void testMapperSingleObjectVersusIterableOnObject() {
-		Assert.assertEquals(
-				JsonBuilderFactory.buildObject().add("k", Mapper.STRING, "a").toString(),
-				"{\"k\":\"a\"}");
-		Assert.assertEquals(
-				JsonBuilderFactory.buildObject().add("k", Mapper.STRING, List.of("a", "b", "c")).toString(),
-				"{\"k\":[\"a\",\"b\",\"c\"]}");
-	}
-
-	/**
-	 * On arrays both Mapper overloads remain, and they differ: varargs appends the
-	 * mapped objects flat, the Iterable overload nests them in a new array.
-	 */
-	@Test
-	public void testMapperVarargsVersusIterableOnArray() {
-		Assert.assertEquals(
-				JsonBuilderFactory.buildArray().add(Mapper.STRING, "a", "b", "c").toString(),
-				"[\"a\",\"b\",\"c\"]");
-		Assert.assertEquals(
-				JsonBuilderFactory.buildArray().add(Mapper.STRING, List.of("a", "b", "c")).toString(),
-				"[[\"a\",\"b\",\"c\"]]");
-	}
-
+    /**
+     * On arrays both Mapper overloads remain, and they differ: varargs appends the mapped objects flat, the Iterable
+     * overload nests them in a new array.
+     */
+    @Test
+    public void testMapperVarargsVersusIterableOnArray() {
+        Assert.assertEquals(
+                JsonBuilderFactory.buildArray()
+                        .add(Mapper.STRING, "a", "b", "c")
+                        .toString(),
+                "[\"a\",\"b\",\"c\"]");
+        Assert.assertEquals(
+                JsonBuilderFactory.buildArray()
+                        .add(Mapper.STRING, List.of("a", "b", "c"))
+                        .toString(),
+                "[[\"a\",\"b\",\"c\"]]");
+    }
 }

@@ -5,17 +5,15 @@ import java.io.Writer;
 
 public interface JsonBuilder {
 
-	/**
-	 * Write the JSON to a writer.
-	 *
-	 * @param out The output writer.
-	 * @throws IOException if there was a problem
-	 */
-	void write(Writer out) throws IOException;
+    /**
+     * Write the JSON to a writer.
+     *
+     * @param out The output writer.
+     * @throws IOException if there was a problem
+     */
+    void write(Writer out) throws IOException;
 
-	/**
-	 * @return The serialized JSON as a string.
-	 */
-	@Override
-	String toString();
+    /** @return The serialized JSON as a string. */
+    @Override
+    String toString();
 }
