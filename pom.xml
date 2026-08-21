@@ -38,7 +38,7 @@
 		<java.version>25</java.version>
 
 		<!-- Dependency versions -->
-		<druvu-lib-loader.version>1.1.0</druvu-lib-loader.version>
+		<druvu-lib-loader.version>1.1.1</druvu-lib-loader.version>
 		<gson.version>2.13.2</gson.version>
 		<testng.version>7.12.0</testng.version>
 
