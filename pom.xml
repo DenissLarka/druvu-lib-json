@@ -1,0 +1,106 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.druvu</groupId>
+	<artifactId>druvu-lib-json</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<name>druvu-lib-json</name>
+	<description>A fluent JSON builder with pluggable serialization backends</description>
+
+	<developers>
+		<developer>
+			<name>Deniss Larka</name>
+		</developer>
+		<developer>
+			<name>Bryn Cooke</name>
+			<roles>
+				<role>author of the original fluent-json</role>
+			</roles>
+		</developer>
+	</developers>
+
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+
+	<modules>
+		<module>druvu-lib-json-api</module>
+		<module>druvu-lib-json-gson</module>
+	</modules>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>21</java.version>
+
+		<!-- Dependency versions -->
+		<druvu-lib-loader.version>1.1.0</druvu-lib-loader.version>
+		<gson.version>2.13.2</gson.version>
+		<testng.version>7.12.0</testng.version>
+
+		<!-- Plugin versions -->
+		<maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+		<maven-surefire-plugin.version>3.5.3</maven-surefire-plugin.version>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.druvu</groupId>
+				<artifactId>druvu-lib-json-api</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.druvu</groupId>
+				<artifactId>druvu-lib-loader</artifactId>
+				<version>${druvu-lib-loader.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.code.gson</groupId>
+				<artifactId>gson</artifactId>
+				<version>${gson.version}</version>
+			</dependency>
+			<!-- TEST -->
+			<dependency>
+				<groupId>org.testng</groupId>
+				<artifactId>testng</artifactId>
+				<version>${testng.version}</version>
+				<scope>test</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>${maven-compiler-plugin.version}</version>
+					<configuration>
+						<release>${java.version}</release>
+						<debug>true</debug>
+						<showDeprecation>true</showDeprecation>
+						<showWarnings>true</showWarnings>
+						<compilerArgs>
+							<arg>-parameters</arg>
+						</compilerArgs>
+					</configuration>
+				</plugin>
+				<plugin>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>${maven-surefire-plugin.version}</version>
+					<configuration>
+						<!-- Tests run on the classpath; this exercises the META-INF/services
+						     discovery path and avoids patching the module graph for TestNG. -->
+						<useModulePath>false</useModulePath>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+</project>
