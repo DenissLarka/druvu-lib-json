@@ -1,6 +1,10 @@
 druvu-lib-json
 ==============
 
+[![CI](https://github.com/DenissLarka/druvu-lib-json/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DenissLarka/druvu-lib-json/actions/workflows/ci.yml)
+![Java](https://img.shields.io/badge/Java-25-blue)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+
 A fluent JSON builder with pluggable serialization backends.
 
 Forked from [Bryn Cooke's fluent-json](https://github.com/BrynCooke/fluent-json).
