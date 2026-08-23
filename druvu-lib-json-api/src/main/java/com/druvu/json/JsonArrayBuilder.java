@@ -3,7 +3,8 @@ package com.druvu.json;
 import java.time.temporal.Temporal;
 
 /**
- * Builder for a JSON array. {@code add} methods accepting a value turn {@code null} into JSON {@code null}.
+ * Builder for a JSON array. {@code add} methods refuse {@code null} values ({@link NullPointerException}): JSON
+ * {@code null} is never built — an element you do not have is an element you do not add.
  *
  * @param <P> the enclosing builder that {@link #end()} returns to; the root builder returns itself.
  */
@@ -53,13 +54,6 @@ public sealed interface JsonArrayBuilder<P> extends JsonBuilder permits BuilderI
      * @return the current builder.
      */
     JsonArrayBuilder<P> add(String value);
-
-    /**
-     * Add a JSON null to this array.
-     *
-     * @return the current builder.
-     */
-    JsonArrayBuilder<P> addNull();
 
     /**
      * Add a date/time value, ISO-formatted.

@@ -154,7 +154,7 @@ public final class Json {
     /**
      * Build a standalone primitive, e.g. for collecting into arrays.
      *
-     * @param value the value; {@code null} builds JSON {@code null}.
+     * @param value the value, never {@code null} — JSON {@code null} is never built.
      * @return the new builder.
      */
     public static JsonBuilder value(String value) {
@@ -164,7 +164,7 @@ public final class Json {
     /**
      * Build a standalone primitive, e.g. for collecting into arrays.
      *
-     * @param value the value; {@code null} builds JSON {@code null}.
+     * @param value the value, never {@code null} — JSON {@code null} is never built.
      * @return the new builder.
      */
     public static JsonBuilder value(Number value) {
@@ -174,7 +174,7 @@ public final class Json {
     /**
      * Build a standalone primitive, e.g. for collecting into arrays.
      *
-     * @param value the value; {@code null} builds JSON {@code null}.
+     * @param value the value, never {@code null} — JSON {@code null} is never built.
      * @return the new builder.
      */
     public static JsonBuilder value(Boolean value) {

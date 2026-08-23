@@ -17,7 +17,8 @@ import java.util.Set;
  * <p>Contracts the API layer upholds, so implementations may rely on them:
  *
  * <ul>
- *   <li>The {@code of} methods never receive {@code null}; null values are turned into {@link #nullNode()} upstream.
+ *   <li>The {@code of} methods never receive {@code null}; the builder side refuses null values upstream and never
+ *       builds JSON {@code null}.
  *   <li>{@link #asString}, {@link #asDecimal} and {@link #asBoolean} are only called on nodes whose {@link #kindOf}
  *       reported the matching kind.
  *   <li>{@link #member}, {@link #keys} are only called on OBJECT nodes; {@link #size}, {@link #element} only on ARRAY
@@ -36,8 +37,6 @@ public interface JsonBackend<N> {
     N newObject();
 
     N newArray();
-
-    N nullNode();
 
     N of(String value);
 

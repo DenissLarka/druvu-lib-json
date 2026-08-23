@@ -55,11 +55,6 @@ public final class GsonBackend implements JsonBackend<JsonElement> {
     }
 
     @Override
-    public JsonElement nullNode() {
-        return JsonNull.INSTANCE;
-    }
-
-    @Override
     public JsonElement of(String value) {
         return new JsonPrimitive(value);
     }

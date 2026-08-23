@@ -3,8 +3,8 @@ package com.druvu.json;
 import java.time.temporal.Temporal;
 
 /**
- * Builder for a JSON object. {@code add} methods accepting a value turn {@code null} into JSON {@code null}; to omit an
- * optional member, simply do not add it.
+ * Builder for a JSON object. {@code add} methods refuse {@code null} values ({@link NullPointerException}): JSON
+ * {@code null} is never built — a member you do not have is a member you do not add.
  *
  * @param <P> the enclosing builder that {@link #end()} returns to; the root builder returns itself.
  */
@@ -102,14 +102,6 @@ public sealed interface JsonObjectBuilder<P> extends JsonBuilder permits Builder
      * @return the current builder.
      */
     JsonObjectBuilder<P> add(String key, Number value);
-
-    /**
-     * Add a null property. Note that the other add methods also accept null values.
-     *
-     * @param key the key for the property.
-     * @return the current builder.
-     */
-    JsonObjectBuilder<P> addNull(String key);
 
     /**
      * Add a simple property.

@@ -46,7 +46,7 @@ final class BuilderImpl<P> implements JsonObjectBuilder<P>, JsonArrayBuilder<P> 
 
     static <T> JsonBuilder primitive(JsonBackend<?> backend, T value, BiFunction<JsonBackend<Object>, T, Object> of) {
         JsonBackend<Object> b = cast(backend);
-        Object node = value == null ? b.nullNode() : of.apply(b, value);
+        Object node = of.apply(b, refuseNull(value));
         return new BuilderImpl<>(b, node, node);
     }
 
@@ -61,7 +61,15 @@ final class BuilderImpl<P> implements JsonObjectBuilder<P>, JsonArrayBuilder<P> 
     }
 
     private <T> Object node(T value, BiFunction<JsonBackend<Object>, T, Object> of) {
-        return value == null ? backend.nullNode() : of.apply(backend, value);
+        return of.apply(backend, refuseNull(value));
+    }
+
+    private static <T> T refuseNull(T value) {
+        if (value == null) {
+            throw new NullPointerException(
+                    "JSON null is never built — omit what you do not have instead of adding null");
+        }
+        return value;
     }
 
     /**
@@ -174,12 +182,6 @@ final class BuilderImpl<P> implements JsonObjectBuilder<P>, JsonArrayBuilder<P> 
     }
 
     @Override
-    public JsonObjectBuilder<P> addNull(String key) {
-        backend.setProperty(context, key, backend.nullNode());
-        return this;
-    }
-
-    @Override
     public JsonArrayBuilder<P> add(JsonBuilder builder) {
         backend.addElement(context, graft(builder));
         return this;
@@ -224,12 +226,6 @@ final class BuilderImpl<P> implements JsonObjectBuilder<P>, JsonArrayBuilder<P> 
     @Override
     public JsonArrayBuilder<P> add(Temporal value) {
         backend.addElement(context, node(value, JsonBackend::of));
-        return this;
-    }
-
-    @Override
-    public JsonArrayBuilder<P> addNull() {
-        backend.addElement(context, backend.nullNode());
         return this;
     }
 

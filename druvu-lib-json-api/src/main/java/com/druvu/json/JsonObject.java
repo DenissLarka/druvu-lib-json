@@ -10,9 +10,11 @@ import java.util.Set;
  * <ul>
  *   <li>{@link #get(String)} and the typed shortcuts ({@link #string}, {@link #decimal}, …) are for keys the document
  *       must have — a missing key or a wrong kind throws {@link JsonException} naming the path.
- *   <li>{@link #find(String)} is for keys that may legitimately be absent — it returns {@link Optional#empty()} for a
- *       missing key, and a present {@linkplain JsonValue#isNull() null value} for a key explicitly set to JSON
- *       {@code null}. The two cases stay distinguishable.
+ *   <li>{@link #find(String)} is for keys that may legitimately be absent — it returns {@link Optional#empty()} both
+ *       for a missing key and for a key explicitly set to JSON {@code null}: on the read side a null value carries
+ *       nothing a reader can use, so the two collapse and {@code find(key).map(JsonValue::asString)} is always safe.
+ *       The raw fact stays reachable — {@link #has(String)} reports a null-valued key as present, and
+ *       {@link #get(String)} returns it as a {@linkplain JsonValue#isNull() null value}.
  * </ul>
  */
 public final class JsonObject extends BackedValue implements JsonValue {
@@ -41,12 +43,16 @@ public final class JsonObject extends BackedValue implements JsonValue {
 
     /**
      * @param key the member key.
-     * @return the value under a key that may be absent: empty when the key is missing, a present
-     *     {@linkplain JsonValue#isNull() null value} when the key is explicitly {@code null}.
+     * @return the value under a key that may be absent: empty when the key is missing or its value is JSON {@code null}
+     *     — a null on the wire reads as "not given".
      */
     public Optional<JsonValue> find(String key) {
         Object member = backend.member(node, key);
-        return member == null ? Optional.empty() : Optional.of(wrap(backend, member, memberPath(key)));
+        if (member == null) {
+            return Optional.empty();
+        }
+        JsonValue value = wrap(backend, member, memberPath(key));
+        return value.isNull() ? Optional.empty() : Optional.of(value);
     }
 
     /**

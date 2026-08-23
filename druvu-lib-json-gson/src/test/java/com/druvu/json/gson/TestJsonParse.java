@@ -1,5 +1,7 @@
 package com.druvu.json.gson;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.druvu.json.Json;
 import com.druvu.json.JsonArray;
 import com.druvu.json.JsonException;
@@ -8,14 +10,13 @@ import com.druvu.json.JsonPrimitive;
 import com.druvu.json.JsonValue;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
- * The reading side: strict parsing into a navigable {@link JsonValue}, typed fail-loud accessors, and the
- * absent-versus-null distinction.
+ * The reading side: strict parsing into a navigable {@link JsonValue}, typed fail-loud accessors, and null-valued keys
+ * reading as not given.
  *
  * @author Deniss Larka
  */
@@ -63,25 +64,24 @@ public class TestJsonParse {
     }
 
     @Test
-    public void absentAndNullStayDistinguishable() {
+    public void nullValuedKeyReadsAsNotGiven() {
         JsonObject customer = firstCustomer();
 
-        Assert.assertTrue(customer.find("missing").isEmpty());
+        assertThat(customer.find("missing")).isEmpty();
+        assertThat(customer.find("closedAt")).isEmpty();
 
-        Optional<JsonValue> closedAt = customer.find("closedAt");
-        Assert.assertTrue(closedAt.isPresent());
-        Assert.assertTrue(closedAt.get().isNull());
-
-        Assert.assertTrue(customer.has("closedAt"));
-        Assert.assertFalse(customer.has("missing"));
+        // The raw facts stay reachable for the rare caller who needs them.
+        assertThat(customer.has("closedAt")).isTrue();
+        assertThat(customer.has("missing")).isFalse();
+        assertThat(customer.get("closedAt").isNull()).isTrue();
     }
 
     @Test
     public void findComposesForTolerantReads() {
         JsonObject customer = firstCustomer();
 
-        Assert.assertEquals(customer.find("name").map(JsonValue::asString), Optional.of("Alice"));
-        Assert.assertTrue(customer.find("closedAt").filter(v -> !v.isNull()).isEmpty());
+        assertThat(customer.find("name").map(JsonValue::asString)).contains("Alice");
+        assertThat(customer.find("closedAt").map(JsonValue::asString)).isEmpty();
     }
 
     @Test

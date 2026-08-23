@@ -15,6 +15,9 @@
  */
 package com.druvu.json.gson;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.druvu.json.Json;
 import com.druvu.json.JsonArrayBuilder;
 import com.druvu.json.JsonBackend;
@@ -41,13 +44,9 @@ public class TestJsonBuild {
     @Test
     public void testBuildObject() {
         Object built = Json.object()
-                .addNull("null")
                 .add("string", "1")
-                .add("stringNull", (String) null)
                 .add("number", 2)
-                .add("numberNull", (Float) null)
                 .add("boolean", true)
-                .add("booleanNull", (Boolean) null)
                 .addObject("obj")
                 .add("NP1", 4)
                 .end()
@@ -60,8 +59,18 @@ public class TestJsonBuild {
                 .raw();
 
         JsonElement test = JsonParser.parseString(
-                "{\"null\":null, \"string\":\"1\",\"stringNull\":null,\"number\":2,\"numberNull\":null,\"boolean\":true,\"booleanNull\":null,\"obj\":{\"NP1\":4},\"arr\":[{},\"AE1\"]}");
-        Assert.assertEquals(test, built);
+                "{\"string\":\"1\",\"number\":2,\"boolean\":true,\"obj\":{\"NP1\":4},\"arr\":[{},\"AE1\"]}");
+        assertThat(built).isEqualTo(test);
+    }
+
+    @Test
+    public void nullValuesRefusedOnEveryWriteDoor() {
+        assertThatThrownBy(() -> Json.object().add("key", (String) null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("omit");
+        assertThatThrownBy(() -> Json.object().add("key", (Number) null)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> Json.array().add((Boolean) null)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> Json.value((String) null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test
@@ -71,8 +80,6 @@ public class TestJsonBuild {
         JsonBuilder builder = Json.object()
                 .add("Prop1", "1")
                 .add("Prop2", 2)
-                .addNull("Prop3")
-                .add("Prop4", (String) null)
                 .addObject("Prop5")
                 .add("NP1", 4)
                 .end()
@@ -87,22 +94,18 @@ public class TestJsonBuild {
         StringWriter writer = new StringWriter();
         builder.write(writer);
         String expected =
-                "{\"Prop1\":\"1\",\"Prop2\":2,\"Prop3\":null,\"Prop4\":null,\"Prop5\":{\"NP1\":4},\"Foo\":[{},\"AE1\"],\"Prop6\":\"1970-01-01T00:00:00Z\",\"Prop7\":\"0000-01-01\"}";
-        Assert.assertEquals(expected, builder.toJson());
-        Assert.assertEquals(expected, builder.toString());
-        Assert.assertEquals(expected, writer.toString());
+                "{\"Prop1\":\"1\",\"Prop2\":2,\"Prop5\":{\"NP1\":4},\"Foo\":[{},\"AE1\"],\"Prop6\":\"1970-01-01T00:00:00Z\",\"Prop7\":\"0000-01-01\"}";
+        assertThat(builder.toJson()).isEqualTo(expected);
+        assertThat(builder.toString()).isEqualTo(expected);
+        assertThat(writer.toString()).isEqualTo(expected);
     }
 
     @Test
     public void testBuildArray() {
         Object built = Json.array()
-                .addNull()
                 .add("1")
-                .add((String) null)
                 .add(2)
-                .add((Float) null)
                 .add(true)
-                .add((Boolean) null)
                 .addObject()
                 .add("NP1", 4)
                 .end()
@@ -114,8 +117,8 @@ public class TestJsonBuild {
                 .build()
                 .raw();
 
-        JsonElement test = JsonParser.parseString("[null, \"1\", null, 2, null, true, null,{\"NP1\":4},[{},\"AE1\"]]");
-        Assert.assertEquals(test, built);
+        JsonElement test = JsonParser.parseString("[\"1\", 2, true,{\"NP1\":4},[{},\"AE1\"]]");
+        assertThat(built).isEqualTo(test);
     }
 
     public static class A {
@@ -227,9 +230,8 @@ public class TestJsonBuild {
 
     @Test
     public void testPrimitiveBuilderSerializes() {
-        Assert.assertEquals("42", Json.value(42).toJson());
-        Assert.assertEquals("\"x\"", Json.value("x").toJson());
-        Assert.assertEquals("null", Json.value((Boolean) null).toJson());
+        assertThat(Json.value(42).toJson()).isEqualTo("42");
+        assertThat(Json.value("x").toJson()).isEqualTo("\"x\"");
     }
 
     @Test
@@ -282,11 +284,6 @@ public class TestJsonBuild {
         @Override
         public JsonElement newArray() {
             return delegate.newArray();
-        }
-
-        @Override
-        public JsonElement nullNode() {
-            return delegate.nullNode();
         }
 
         @Override
