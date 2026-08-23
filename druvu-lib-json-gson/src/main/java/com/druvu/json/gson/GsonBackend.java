@@ -15,24 +15,34 @@
  */
 package com.druvu.json.gson;
 
-import com.druvu.json.JsonBuilderFactory;
+import com.druvu.json.JsonBackend;
+import com.druvu.json.JsonValue;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.Strictness;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
+import java.math.BigDecimal;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Gson backend: nodes are {@link JsonElement}s, so {@code getJson()} returns the native Gson tree.
+ * Gson backend: nodes are {@link JsonElement}s, so {@code raw()} returns the native Gson tree. Parsing is strict per
+ * the SPI contract: RFC-8259 syntax only, no trailing content.
  *
  * @author Bryn Cooke
  * @author Deniss Larka
  */
-public final class GsonBackend implements JsonBuilderFactory.Backend<JsonElement> {
+public final class GsonBackend implements JsonBackend<JsonElement> {
 
     @Override
     public JsonElement newObject() {
@@ -75,6 +85,65 @@ public final class GsonBackend implements JsonBuilderFactory.Backend<JsonElement
     }
 
     @Override
+    public JsonElement parse(Reader in) throws IOException {
+        JsonReader reader = new JsonReader(in);
+        reader.setStrictness(Strictness.STRICT);
+        JsonElement element = JsonParser.parseReader(reader);
+        if (reader.peek() != JsonToken.END_DOCUMENT) {
+            throw new JsonSyntaxException("Trailing content after the JSON document");
+        }
+        return element;
+    }
+
+    @Override
+    public JsonValue.Kind kindOf(JsonElement node) {
+        return switch (node) {
+            case JsonNull _ -> JsonValue.Kind.NULL;
+            case JsonObject _ -> JsonValue.Kind.OBJECT;
+            case JsonArray _ -> JsonValue.Kind.ARRAY;
+            case JsonPrimitive primitive when primitive.isString() -> JsonValue.Kind.STRING;
+            case JsonPrimitive primitive when primitive.isNumber() -> JsonValue.Kind.NUMBER;
+            case JsonPrimitive _ -> JsonValue.Kind.BOOLEAN;
+            default -> throw new IllegalArgumentException("Unknown node type: " + node.getClass());
+        };
+    }
+
+    @Override
+    public String asString(JsonElement node) {
+        return node.getAsString();
+    }
+
+    @Override
+    public BigDecimal asDecimal(JsonElement node) {
+        return node.getAsBigDecimal();
+    }
+
+    @Override
+    public boolean asBoolean(JsonElement node) {
+        return node.getAsBoolean();
+    }
+
+    @Override
+    public JsonElement member(JsonElement objectNode, String key) {
+        return objectNode.getAsJsonObject().get(key);
+    }
+
+    @Override
+    public Set<String> keys(JsonElement objectNode) {
+        return objectNode.getAsJsonObject().keySet();
+    }
+
+    @Override
+    public int size(JsonElement arrayNode) {
+        return arrayNode.getAsJsonArray().size();
+    }
+
+    @Override
+    public JsonElement element(JsonElement arrayNode, int index) {
+        return arrayNode.getAsJsonArray().get(index);
+    }
+
+    @Override
     public String serialize(JsonElement node) {
         return node.toString();
     }
@@ -84,37 +153,29 @@ public final class GsonBackend implements JsonBuilderFactory.Backend<JsonElement
         write(new JsonWriter(out), node);
     }
 
-    /** Serialization code copied from GSON */
+    /** Serialization code adapted from GSON */
     private void write(JsonWriter out, JsonElement value) throws IOException {
-        if (value == null || value.isJsonNull()) {
-            out.nullValue();
-        } else if (value.isJsonPrimitive()) {
-            JsonPrimitive primitive = value.getAsJsonPrimitive();
-            if (primitive.isNumber()) {
-                out.value(primitive.getAsNumber());
-            } else if (primitive.isBoolean()) {
-                out.value(primitive.getAsBoolean());
-            } else {
-                out.value(primitive.getAsString());
+        switch (value == null ? JsonNull.INSTANCE : value) {
+            case JsonNull _ -> out.nullValue();
+            case JsonPrimitive primitive when primitive.isNumber() -> out.value(primitive.getAsNumber());
+            case JsonPrimitive primitive when primitive.isBoolean() -> out.value(primitive.getAsBoolean());
+            case JsonPrimitive primitive -> out.value(primitive.getAsString());
+            case JsonArray array -> {
+                out.beginArray();
+                for (JsonElement element : array) {
+                    write(out, element);
+                }
+                out.endArray();
             }
-
-        } else if (value.isJsonArray()) {
-            out.beginArray();
-            for (JsonElement e : value.getAsJsonArray()) {
-                write(out, e);
+            case JsonObject object -> {
+                out.beginObject();
+                for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
+                    out.name(entry.getKey());
+                    write(out, entry.getValue());
+                }
+                out.endObject();
             }
-            out.endArray();
-
-        } else if (value.isJsonObject()) {
-            out.beginObject();
-            for (Map.Entry<String, JsonElement> e : value.getAsJsonObject().entrySet()) {
-                out.name(e.getKey());
-                write(out, e.getValue());
-            }
-            out.endObject();
-
-        } else {
-            throw new IllegalArgumentException("Couldn't write " + value.getClass());
+            default -> throw new IllegalArgumentException("Couldn't write " + value.getClass());
         }
     }
 }

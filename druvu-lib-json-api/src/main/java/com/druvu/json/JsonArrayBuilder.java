@@ -1,27 +1,32 @@
 package com.druvu.json;
 
 import java.time.temporal.Temporal;
-import java.util.Date;
 
-public interface JsonArrayBuilder<P, R> extends JsonBuilder {
+/**
+ * Builder for a JSON array. {@code add} methods accepting a value turn {@code null} into JSON {@code null}.
+ *
+ * @param <P> the enclosing builder that {@link #end()} returns to; the root builder returns itself.
+ */
+public sealed interface JsonArrayBuilder<P> extends JsonBuilder permits BuilderImpl {
+
     /**
      * Add a new object as the next element in this array.
      *
      * @return the builder for the new object.
      */
-    JsonObjectBuilder<JsonArrayBuilder<P, R>, R> addObject();
+    JsonObjectBuilder<JsonArrayBuilder<P>> addObject();
 
     /**
      * Add a new array as the next element in this array.
      *
      * @return the builder for the new array.
      */
-    JsonArrayBuilder<JsonArrayBuilder<P, R>, R> addArray();
+    JsonArrayBuilder<JsonArrayBuilder<P>> addArray();
 
     /**
-     * End the current object and return to building the parent element.
+     * End the current array and return to building the parent element.
      *
-     * @return the builder
+     * @return the parent builder.
      */
     P end();
 
@@ -31,7 +36,7 @@ public interface JsonArrayBuilder<P, R> extends JsonBuilder {
      * @param value the value to add.
      * @return the current builder.
      */
-    JsonArrayBuilder<P, R> add(Boolean value);
+    JsonArrayBuilder<P> add(Boolean value);
 
     /**
      * Add a single value to this array.
@@ -39,7 +44,7 @@ public interface JsonArrayBuilder<P, R> extends JsonBuilder {
      * @param value the value to add.
      * @return the current builder.
      */
-    JsonArrayBuilder<P, R> add(Character value);
+    JsonArrayBuilder<P> add(Number value);
 
     /**
      * Add a single value to this array.
@@ -47,53 +52,38 @@ public interface JsonArrayBuilder<P, R> extends JsonBuilder {
      * @param value the value to add.
      * @return the current builder.
      */
-    JsonArrayBuilder<P, R> add(Number value);
+    JsonArrayBuilder<P> add(String value);
 
     /**
-     * Add a single value to this array.
+     * Add a JSON null to this array.
+     *
+     * @return the current builder.
+     */
+    JsonArrayBuilder<P> addNull();
+
+    /**
+     * Add a date/time value, ISO-formatted.
      *
      * @param value the value to add.
      * @return the current builder.
      */
-    JsonArrayBuilder<P, R> add(String value);
-    /**
-     * Add a single value to this array.
-     *
-     * @return the current builder.
-     */
-    JsonArrayBuilder<P, R> addNull();
+    JsonArrayBuilder<P> add(Temporal value);
 
     /**
-     * Add a single value to this array.
-     *
-     * @param value the value to add.
-     * @return the current builder.
-     */
-    JsonArrayBuilder<P, R> add(Date value);
-
-    /**
-     * Add a single value to this array.
-     *
-     * @param value the value to add.
-     * @return the current builder.
-     */
-    JsonArrayBuilder<P, R> add(Temporal value);
-
-    /**
-     * Add an array of elements.
+     * Add a new array of elements as the next element in this array.
      *
      * @param builders the builders to get the elements from.
      * @return the current builder.
      */
-    JsonArrayBuilder<P, R> add(Iterable<? extends JsonBuilder> builders);
+    JsonArrayBuilder<P> add(Iterable<? extends JsonBuilder> builders);
 
     /**
-     * Add a collection of elements to the current array.
+     * Add a collection of elements to the current array, flat.
      *
      * @param builders the builders to get the elements from.
      * @return the current builder.
      */
-    JsonArrayBuilder<P, R> addAll(Iterable<? extends JsonBuilder> builders);
+    JsonArrayBuilder<P> addAll(Iterable<? extends JsonBuilder> builders);
 
     /**
      * Add a single element.
@@ -101,39 +91,45 @@ public interface JsonArrayBuilder<P, R> extends JsonBuilder {
      * @param builder the builder for the element to add.
      * @return the current builder.
      */
-    JsonArrayBuilder<P, R> add(JsonBuilder builder);
+    JsonArrayBuilder<P> add(JsonBuilder builder);
 
     /**
-     * Add an array of elements.
+     * Add an already parsed or built value as the next element. The value must come from the same backend as this
+     * builder.
      *
-     * @param transform The transformer for the object.
-     * @param objects the objects to add.
-     * @param <T> The type of the objects
+     * @param value the value to add.
      * @return the current builder.
      */
-    <T> JsonArrayBuilder<P, R> add(Mapper<T> transform, Iterable<T> objects);
+    JsonArrayBuilder<P> add(JsonValue value);
 
     /**
-     * Add a collection of elements to the current array.
+     * Add a new array of mapped objects as the next element in this array.
      *
-     * @param transform The transformer for the object.
+     * @param transform the transformer for the objects.
      * @param objects the objects to add.
-     * @param <T> The type of the objects
+     * @param <T> the type of the objects.
      * @return the current builder.
      */
-    <T> JsonArrayBuilder<P, R> addAll(Mapper<T> transform, Iterable<T> objects);
+    <T> JsonArrayBuilder<P> add(Mapper<T> transform, Iterable<T> objects);
+
+    /**
+     * Add a collection of mapped objects to the current array, flat.
+     *
+     * @param transform the transformer for the objects.
+     * @param objects the objects to add.
+     * @param <T> the type of the objects.
+     * @return the current builder.
+     */
+    <T> JsonArrayBuilder<P> addAll(Mapper<T> transform, Iterable<T> objects);
 
     /**
      * Add each mapped object as an element of this array, flat — unlike {@link #add(Mapper, Iterable)}, which nests
      * them in a new array.
      *
-     * @param transform The transformer for the object.
+     * @param transform the transformer for the objects.
      * @param objects the objects to add.
-     * @param <T> The type of the objects
+     * @param <T> the type of the objects.
      * @return the current builder.
      */
-    <T> JsonArrayBuilder<P, R> add(Mapper<T> transform, T... objects);
-
-    /** @return the built JSON root node, in the backend's native type. */
-    R getJson();
+    <T> JsonArrayBuilder<P> add(Mapper<T> transform, T... objects);
 }

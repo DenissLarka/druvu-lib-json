@@ -1,4 +1,4 @@
-/** Gson backend for the fluent-json builder API. */
+/** Gson backend for the druvu-lib-json building and parsing API. */
 module com.druvu.json.gson {
     exports com.druvu.json.gson;
 
