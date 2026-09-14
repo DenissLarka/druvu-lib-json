@@ -26,7 +26,7 @@ Add one JSON backend module; the api comes transitively. The backend's own libra
 <dependency>
   <groupId>com.druvu</groupId>
   <artifactId>druvu-lib-json-gson</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
 </dependency>
 <dependency>
   <groupId>com.google.code.gson</groupId>
@@ -42,7 +42,8 @@ backend must be present: with none, the entry points fail with a clear error; wi
 fails naming both (the explicit-backend entry points below work regardless). The YAML module is
 not a second JSON backend — see [YAML](#yaml) — so it can sit alongside either.
 
-> Pre-release: not yet published to a public repository.
+Published to **GitHub Packages** — see [Installation](#installation-github-packages) for the
+one-time authentication setup.
 
 Building
 --------
@@ -207,6 +208,70 @@ Adding a backend
    `com.druvu.json.contract`, each returning your backend — the gson and jackson modules show
    the shape
 5. Done — no changes to `druvu-lib-json-api`
+
+Installation (GitHub Packages)
+------------------------------
+
+This library is published to **GitHub Packages**, which requires Maven authentication even for a
+public package.
+
+**1. Generate a GitHub Personal Access Token:**
+
+Create a **classic** token with the single `read:packages` scope — nothing more is needed to
+consume a public package.
+[This link](https://github.com/settings/tokens/new?scopes=read:packages&description=maven-read-packages)
+opens the form with the right type and scope pre-selected.
+
+> Note: it must be a *classic* token. GitHub's token page defaults to the newer fine-grained
+> tokens, which the GitHub Packages Maven registry does not accept — the symptom is an
+> unexplained `401 Unauthorized` from `maven.pkg.github.com`.
+
+**2. Add the server to `~/.m2/settings.xml`:**
+
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>github</id>
+      <username>YOUR_GITHUB_USERNAME</username>
+      <password>YOUR_GITHUB_TOKEN</password>
+    </server>
+  </servers>
+</settings>
+```
+
+**3. Add the repository and the backend you want to your project `pom.xml`:**
+
+```xml
+<repositories>
+    <repository>
+        <id>github</id>
+        <url>https://maven.pkg.github.com/DenissLarka/druvu-lib-json</url>
+    </repository>
+</repositories>
+```
+
+```xml
+<dependency>
+    <groupId>com.druvu</groupId>
+    <artifactId>druvu-lib-json-gson</artifactId>
+    <version>1.0.0</version>
+</dependency>
+<!-- or druvu-lib-json-jackson, or druvu-lib-json-yaml -->
+```
+
+The api comes transitively; bring your own Gson, Jackson or snakeyaml-engine version. Writing a
+backend of your own? The contract suite ships as the api's `tests` artifact:
+
+```xml
+<dependency>
+    <groupId>com.druvu</groupId>
+    <artifactId>druvu-lib-json-api</artifactId>
+    <version>1.0.0</version>
+    <type>test-jar</type>
+    <scope>test</scope>
+</dependency>
+```
 
 License
 -------
