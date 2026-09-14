@@ -5,7 +5,7 @@ druvu-lib-json
 ![Java](https://img.shields.io/badge/Java-25-blue)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
-Fluent JSON building and strict parsing with pluggable backends.
+Fluent JSON building and strict parsing with pluggable backends — and the same API over YAML.
 
 The builder DSL is forked from [Bryn Cooke's fluent-json](https://github.com/BrynCooke/fluent-json);
 this library decouples it from Gson behind a small backend SPI (discovered via
@@ -16,9 +16,11 @@ reading side: parsing into a navigable, strictly typed value tree.
 |--------|---------|
 | `druvu-lib-json-api` | builder + parser API, `JsonBackend` SPI — no JSON library dependency |
 | `druvu-lib-json-gson` | Gson backend |
+| `druvu-lib-json-jackson` | Jackson 3 backend (`tools.jackson`) |
+| `druvu-lib-json-yaml` | YAML 1.2 backend (snakeyaml-engine) |
 
-Add the backend module; the api comes transitively. The backend's JSON library itself is
-`provided`: **your application supplies its own Gson version.**
+Add one JSON backend module; the api comes transitively. The backend's own library is `provided`:
+**your application supplies its own Gson or Jackson version.**
 
 ```xml
 <dependency>
@@ -29,12 +31,16 @@ Add the backend module; the api comes transitively. The backend's JSON library i
 <dependency>
   <groupId>com.google.code.gson</groupId>
   <artifactId>gson</artifactId>
-  <version>2.13.2</version>
+  <version>2.14.0</version>
 </dependency>
 ```
 
-**Zero-config** — the backend is discovered on the class path / module path. Exactly one backend
-module must be present; with none, the entry points fail with a clear error.
+or, in a Jackson house, `druvu-lib-json-jackson` next to `tools.jackson.core:jackson-databind`.
+
+**Zero-config** — the backend is discovered on the class path / module path. Exactly one JSON
+backend must be present: with none, the entry points fail with a clear error; with two, discovery
+fails naming both (the explicit-backend entry points below work regardless). The YAML module is
+not a second JSON backend — see [YAML](#yaml) — so it can sit alongside either.
 
 > Pre-release: not yet published to a public repository.
 
@@ -45,7 +51,6 @@ Building
 String json = Json.object()
     .add("prop1", "1")
     .add("prop2", 2)
-    .addNull("prop3")
     .addObject("prop5")
         .add("np1", 4)
         .end()
@@ -61,7 +66,6 @@ String json = Json.object()
 {
     "prop1": "1",
     "prop2": 2,
-    "prop3": null,
     "prop5": {
             "np1": 4
         },
@@ -107,10 +111,12 @@ The accessors are deliberately strict:
 - **Numbers are `BigDecimal`** — exactly as they appeared on the wire, never through floating
   point. `asInt()`/`asLong()` succeed only when the value is exactly representable; there is no
   `double` accessor.
-- **Absence and JSON `null` stay distinguishable.** `get(key)` demands the key; `find(key)`
-  returns `Optional.empty()` for a missing key and a present *null value* for an explicit
-  `null` — so `find("closedAt").filter(v -> !v.isNull())` reads optional fields tolerantly
-  without losing the distinction.
+- **A `null` on the wire reads as "not given".** `get(key)` demands the key; `find(key)` returns
+  `Optional.empty()` both for a missing key and for a key whose value is `null`, so optional
+  fields read as `find("closedAt").map(JsonValue::asString)`. The raw facts stay reachable for
+  the rare caller who needs them: `has(key)` is true for a null-valued key, and
+  `get(key).isNull()` tells. The write side mirrors it — `null` is refused, never built: omit
+  what you do not have.
 - **Parsing is strict RFC 8259.** Malformed documents, trailing content, single quotes and
   unquoted keys are refused.
 
@@ -134,6 +140,42 @@ JsonValue instrument = Json.parse(fragment);
 String order = Json.object().add("instrument", instrument).toJson();
 ```
 
+YAML
+----
+
+`druvu-lib-json-yaml` reads and writes YAML 1.2 through the same builders, the same `JsonValue`
+tree and the same strict accessors. Only the front door differs:
+
+```java
+String config = Yaml.object()
+    .add("endpoint", url)
+    .addArray("profiles").add("sandbox").add("prod").end()
+    .toJson();
+
+JsonObject parsed = Yaml.parse(config).asObject();
+```
+
+```yaml
+endpoint: https://example.test
+profiles:
+- sandbox
+- prod
+```
+
+**A format is not a backend.** Gson and Jackson are interchangeable ways to hold the same JSON, so
+asking for two at once is an accident worth failing on. YAML is a different answer to *what should
+this text be*, so it is chosen at the call site instead of being discovered — and a YAML module and
+a JSON module coexist on one class path without either shadowing the other.
+
+The schema is **core** — YAML 1.2, the version that is a strict superset of JSON. YAML 1.1
+spellings are deliberately not honoured: `yes` and `on` are strings, `1:30` is a string and not
+sexagesimal sixty, `1_000` is a string. Two further narrowings keep YAML inside the data model this
+API exposes: **a mapping key must be a scalar**, and the non-finite floats YAML can spell (`.inf`,
+`.nan`) are **refused** when read as a number rather than silently substituted.
+
+Because the tree is the JSON data model throughout, `toJson()` stays the terminal that serializes a
+value — as YAML text when the backend is YAML.
+
 Explicit backend
 ----------------
 
@@ -146,18 +188,25 @@ JsonElement gsonTree = (JsonElement) Json.object(new GsonBackend()).add("a", 1).
 ```
 
 Values and builders from different backends cannot be combined; mixing them raises an
-`IllegalArgumentException`.
+`IllegalArgumentException`. For the same reason a `Mapper` is bound to whichever front door it
+builds through, so write `s -> Json.value(s)` (or `Yaml.value`) rather than reaching for a shared
+constant.
 
 Adding a backend
 ----------------
 
 1. Implement `JsonBackend<YourNodeType>` — node creation and mutation for building; parse and
    inspection for reading. Date/time conversion has an ISO-string default, override it if your
-   format has native types
+   format has native types. A backend for a *different format* implements `YamlBackend` instead, or
+   follows its pattern: a marker interface plus a facade of its own
 2. Implement `com.druvu.lib.loader.ComponentFactory` returning your backend
 3. Register it in `META-INF/services/com.druvu.lib.loader.ComponentFactory`
    (and `provides ... with ...` in `module-info.java`)
-4. Done — no changes to `druvu-lib-json-api`
+4. Run the contract suite against it: depend on the api `test-jar` (test scope) and subclass
+   `JsonBuildContract`, `JsonParseContract` and `JsonSyntaxContract` from
+   `com.druvu.json.contract`, each returning your backend — the gson and jackson modules show
+   the shape
+5. Done — no changes to `druvu-lib-json-api`
 
 License
 -------

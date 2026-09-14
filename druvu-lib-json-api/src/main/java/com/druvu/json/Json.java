@@ -1,7 +1,5 @@
 package com.druvu.json;
 
-import com.druvu.lib.loader.ComponentLoader;
-import com.druvu.lib.loader.TargetClassNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -26,7 +24,9 @@ import java.io.StringReader;
  */
 public final class Json {
 
-    private static volatile JsonBackend<?> defaultBackend;
+    @SuppressWarnings("rawtypes")
+    private static final BackendHolder<JsonBackend> BACKEND =
+            new BackendHolder<>(JsonBackend.class, "JSON", "com.druvu:druvu-lib-json-gson");
 
     private Json() {}
 
@@ -35,24 +35,7 @@ public final class Json {
      * discovery is not cached: it throws again on the next call, with the original cause attached.
      */
     static JsonBackend<?> defaultBackend() {
-        JsonBackend<?> backend = defaultBackend;
-        if (backend == null) {
-            synchronized (Json.class) {
-                backend = defaultBackend;
-                if (backend == null) {
-                    try {
-                        backend = ComponentLoader.load(JsonBackend.class);
-                    } catch (TargetClassNotFoundException e) {
-                        throw new IllegalStateException(
-                                "No JSON backend found. Add a backend module (e.g. com.druvu:druvu-lib-json-gson) "
-                                        + "to the class path or module path, or pass a JsonBackend explicitly.",
-                                e);
-                    }
-                    defaultBackend = backend;
-                }
-            }
-        }
-        return backend;
+        return BACKEND.get();
     }
 
     /** @return a builder for a new JSON object, using the discovered backend. */

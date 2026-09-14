@@ -7,10 +7,10 @@
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>druvu-lib-json-gson</artifactId>
+	<artifactId>druvu-lib-json-yaml</artifactId>
 
-	<name>druvu-lib-json Gson Backend</name>
-	<description>Gson backend for the fluent-json builder API</description>
+	<name>druvu-lib-json YAML Backend</name>
+	<description>YAML 1.2 backend for the druvu-lib-json building and parsing API, on snakeyaml-engine</description>
 
 	<dependencies>
 		<dependency>
@@ -21,9 +21,10 @@
 			<groupId>com.druvu</groupId>
 			<artifactId>druvu-lib-loader</artifactId>
 		</dependency>
+		<!-- The consumer brings its own snakeyaml-engine, exactly like the other backend modules. -->
 		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
+			<groupId>org.snakeyaml</groupId>
+			<artifactId>snakeyaml-engine</artifactId>
 			<scope>provided</scope>
 		</dependency>
 		<!-- TEST -->
@@ -31,6 +32,19 @@
 			<groupId>com.druvu</groupId>
 			<artifactId>druvu-lib-json-api</artifactId>
 			<type>test-jar</type>
+		</dependency>
+		<!-- A JSON backend alongside this one: the point of giving YAML its own front door is that
+		     both can sit on one class path. TestFormatsCoexist proves it. -->
+		<dependency>
+			<groupId>com.druvu</groupId>
+			<artifactId>druvu-lib-json-gson</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.testng</groupId>

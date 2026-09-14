@@ -31,6 +31,8 @@
 	<modules>
 		<module>druvu-lib-json-api</module>
 		<module>druvu-lib-json-gson</module>
+		<module>druvu-lib-json-jackson</module>
+		<module>druvu-lib-json-yaml</module>
 	</modules>
 
 	<properties>
@@ -40,12 +42,15 @@
 		<!-- Dependency versions -->
 		<druvu-lib-loader.version>1.1.1</druvu-lib-loader.version>
 		<gson.version>2.14.0</gson.version>
+		<jackson.version>3.2.2</jackson.version>
+		<snakeyaml-engine.version>3.1.1</snakeyaml-engine.version>
 		<testng.version>7.12.0</testng.version>
 		<assertj.version>3.27.7</assertj.version>
 
 		<!-- Plugin versions -->
 		<maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
 		<maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
+		<maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
 		<maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
 
 		<!-- Code quality plugin versions (same set as druvu-lib-jdbc / druvu-acc-parent) -->
@@ -63,6 +68,15 @@
 				<artifactId>druvu-lib-json-api</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			<!-- The backend contract suite (api src/test, packaged as a test-jar): every backend
+			     module runs it against its own backend. -->
+			<dependency>
+				<groupId>com.druvu</groupId>
+				<artifactId>druvu-lib-json-api</artifactId>
+				<version>${project.version}</version>
+				<type>test-jar</type>
+				<scope>test</scope>
+			</dependency>
 			<dependency>
 				<groupId>com.druvu</groupId>
 				<artifactId>druvu-lib-loader</artifactId>
@@ -72,6 +86,16 @@
 				<groupId>com.google.code.gson</groupId>
 				<artifactId>gson</artifactId>
 				<version>${gson.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>tools.jackson.core</groupId>
+				<artifactId>jackson-databind</artifactId>
+				<version>${jackson.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.snakeyaml</groupId>
+				<artifactId>snakeyaml-engine</artifactId>
+				<version>${snakeyaml-engine.version}</version>
 			</dependency>
 			<!-- TEST -->
 			<dependency>
@@ -104,6 +128,10 @@
 							<arg>-parameters</arg>
 						</compilerArgs>
 					</configuration>
+				</plugin>
+				<plugin>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>${maven-jar-plugin.version}</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>

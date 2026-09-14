@@ -21,6 +21,10 @@ import java.math.BigDecimal;
  * <p>All typed accessors are strict: asking a value for a type it does not hold throws {@link JsonException} naming the
  * expected kind, the actual kind and the {@linkplain #path() path} — nothing is coerced. Numbers are exposed as
  * {@link BigDecimal} (or via the exact integer accessors); there is deliberately no floating-point accessor.
+ *
+ * <p>{@code equals} carries no promise of its own: it delegates to the backend's native node, which compares
+ * structurally on some engines and by identity on others. Compare what you read out of two documents rather than the
+ * values themselves; values from different backends are never equal in any case.
  */
 public sealed interface JsonValue permits JsonObject, JsonArray, JsonPrimitive {
 

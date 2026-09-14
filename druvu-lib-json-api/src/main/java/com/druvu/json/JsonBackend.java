@@ -28,6 +28,11 @@ import java.util.Set;
  * <p>Backends without a native date/time node type can rely on the default {@link #of(Temporal)}, which converts to an
  * ISO-formatted string. Backends with richer node types may override it.
  *
+ * <p>What to throw: a refusal about the <em>data</em> — a value the format can spell but this API will not represent —
+ * is a {@link JsonException}, because accessor calls reach the caller unwrapped. A violated contract from the list
+ * above is a programming error and stays an {@link IllegalArgumentException}. Anything {@link #parse} throws is wrapped
+ * in a {@link JsonException} either way, so it may surface the engine's own exception.
+ *
  * @param <N> the backend's native node type (e.g. {@code JsonElement} for Gson, {@code JsonNode} for Jackson)
  */
 public interface JsonBackend<N> {

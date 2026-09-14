@@ -7,8 +7,10 @@ import java.io.Writer;
  * Shared state and behaviour of the {@link JsonValue} implementations: a backend, the native node it wraps, and the
  * node's path within its document.
  *
- * <p>Equality is structural per backend: two values are equal when their native nodes are equal, so values from
- * different backends never compare equal.
+ * <p>Equality is delegated, never defined here: two values are equal when the native nodes they wrap are equal, and
+ * what that means belongs to the engine. Gson and Jackson compare their nodes structurally; snakeyaml-engine compares
+ * its own by identity. So nothing may rely on equality meaning the same thing across backends — only that values from
+ * two different backends never compare equal, their nodes being unrelated types.
  */
 abstract class BackedValue {
 

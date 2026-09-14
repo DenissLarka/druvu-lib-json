@@ -7,10 +7,10 @@
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>druvu-lib-json-gson</artifactId>
+	<artifactId>druvu-lib-json-jackson</artifactId>
 
-	<name>druvu-lib-json Gson Backend</name>
-	<description>Gson backend for the fluent-json builder API</description>
+	<name>druvu-lib-json Jackson Backend</name>
+	<description>Jackson 3 backend for the druvu-lib-json building and parsing API</description>
 
 	<dependencies>
 		<dependency>
@@ -21,9 +21,10 @@
 			<groupId>com.druvu</groupId>
 			<artifactId>druvu-lib-loader</artifactId>
 		</dependency>
+		<!-- The consumer brings its own Jackson, exactly like the gson module. -->
 		<dependency>
-			<groupId>com.google.code.gson</groupId>
-			<artifactId>gson</artifactId>
+			<groupId>tools.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
 			<scope>provided</scope>
 		</dependency>
 		<!-- TEST -->

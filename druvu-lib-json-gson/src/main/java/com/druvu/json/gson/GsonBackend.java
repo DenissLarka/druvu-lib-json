@@ -28,6 +28,7 @@ import com.google.gson.Strictness;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -83,6 +84,12 @@ public final class GsonBackend implements JsonBackend<JsonElement> {
     public JsonElement parse(Reader in) throws IOException {
         JsonReader reader = new JsonReader(in);
         reader.setStrictness(Strictness.STRICT);
+        try {
+            reader.peek();
+        } catch (EOFException e) {
+            // JsonParser would quietly answer JsonNull here; an empty document is not a document.
+            throw new JsonSyntaxException("Empty document: expected a JSON value", e);
+        }
         JsonElement element = JsonParser.parseReader(reader);
         if (reader.peek() != JsonToken.END_DOCUMENT) {
             throw new JsonSyntaxException("Trailing content after the JSON document");
