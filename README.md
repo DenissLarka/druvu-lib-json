@@ -2,6 +2,7 @@ druvu-lib-json
 ==============
 
 [![CI](https://github.com/DenissLarka/druvu-lib-json/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/DenissLarka/druvu-lib-json/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/DenissLarka/druvu-lib-json?label=GitHub%20Packages&color=blue)](https://github.com/DenissLarka/druvu-lib-json/packages)
 ![Java](https://img.shields.io/badge/Java-25-blue)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
@@ -9,7 +10,7 @@ Fluent JSON building and strict parsing with pluggable backends — and the same
 
 The builder DSL is forked from [Bryn Cooke's fluent-json](https://github.com/BrynCooke/fluent-json);
 this library decouples it from Gson behind a small backend SPI (discovered via
-[druvu-lib-loader](https://repo1.maven.org/maven2/com/druvu/druvu-lib-loader/)) and adds the
+[druvu-lib-loader](https://github.com/DenissLarka/druvu-lib-loader)) and adds the
 reading side: parsing into a navigable, strictly typed value tree.
 
 | Module | Content |
@@ -26,7 +27,7 @@ Add one JSON backend module; the api comes transitively. The backend's own libra
 <dependency>
   <groupId>com.druvu</groupId>
   <artifactId>druvu-lib-json-gson</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
 </dependency>
 <dependency>
   <groupId>com.google.code.gson</groupId>
@@ -37,10 +38,18 @@ Add one JSON backend module; the api comes transitively. The backend's own libra
 
 or, in a Jackson house, `druvu-lib-json-jackson` next to `tools.jackson.core:jackson-databind`.
 
+Everything you call lives in one package, `com.druvu.json`: the `Json` and `Yaml` front doors, the
+builders (`JsonObjectBuilder`, `JsonArrayBuilder`, both a `JsonBuilder`), the `JsonValue` tree (`JsonObject`,
+`JsonArray`, `JsonPrimitive`), `Mapper` and `JsonException`. Java 25 or newer. The backend
+classes — `com.druvu.json.gson.GsonBackend`, `com.druvu.json.jackson.JacksonBackend`,
+`com.druvu.json.yaml.SnakeYamlBackend` — matter only on the [explicit backend](#explicit-backend) path.
+
 **Zero-config** — the backend is discovered on the class path / module path. Exactly one JSON
 backend must be present: with none, the entry points fail with a clear error; with two, discovery
 fails naming both (the explicit-backend entry points below work regardless). The YAML module is
-not a second JSON backend — see [YAML](#yaml) — so it can sit alongside either.
+not a second JSON backend — see [YAML](#yaml) — so it can sit alongside either. On the module path
+a consumer declares `requires com.druvu.json;` and nothing for the backend: its module only has to
+be present, service binding does the rest.
 
 Published to **GitHub Packages** — see [Installation](#installation-github-packages) for the
 one-time authentication setup.
@@ -149,7 +158,8 @@ switch (Json.parse(input)) {
 ```
 
 Building and parsing meet in `JsonValue`: `build()` returns the same type `parse` produces, so a
-built tree is navigable without serializing, and a parsed fragment grafts into a builder:
+built tree is navigable without serializing, a parsed fragment grafts into a builder, and `toJson()`
+serializes a value and a builder alike:
 
 ```java
 JsonObject built = Json.object().add("a", "b").build().asObject();  // no casts anywhere
@@ -178,7 +188,8 @@ JsonValue result = Json.fill("""
 
 A string is escaped, a built or parsed fragment splices in whole, `null` is refused, and placeholders
 and values that differ in number are an `IllegalArgumentException` naming the position. Use the builder
-when the shape itself is computed; use a template when it is written down.
+when the shape itself is computed; use a template when it is written down. Templates are JSON only —
+there is no `Yaml.fill`, because `?` is YAML syntax.
 
 YAML
 ----
@@ -294,7 +305,7 @@ opens the form with the right type and scope pre-selected.
 <dependency>
     <groupId>com.druvu</groupId>
     <artifactId>druvu-lib-json-gson</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 <!-- or druvu-lib-json-jackson, or druvu-lib-json-yaml -->
 ```
@@ -306,7 +317,7 @@ backend of your own? The contract suite ships as the api's `tests` artifact:
 <dependency>
     <groupId>com.druvu</groupId>
     <artifactId>druvu-lib-json-api</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <type>test-jar</type>
     <scope>test</scope>
 </dependency>
