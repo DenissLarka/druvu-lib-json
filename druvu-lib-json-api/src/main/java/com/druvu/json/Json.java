@@ -3,9 +3,11 @@ package com.druvu.json;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
- * The front door: build JSON fluently, parse JSON into a navigable {@link JsonValue}.
+ * The front door: build JSON fluently, fill a JSON template, parse JSON into a navigable {@link JsonValue}.
  *
  * <pre>{@code
  * String body = Json.object()
@@ -62,6 +64,53 @@ public final class Json {
      */
     public static JsonArrayBuilder<?> array(JsonBackend<?> backend) {
         return BuilderImpl.newArray(backend);
+    }
+
+    /**
+     * Build a new JSON object by writing its members in a body, using the discovered backend. The returned builder is
+     * complete: serialize it, build it, or go on adding.
+     *
+     * @param body writes the object's members.
+     * @return the builder holding the written object.
+     */
+    public static JsonObjectBuilder<?> object(Consumer<? super JsonObjectBody> body) {
+        return object(defaultBackend(), body);
+    }
+
+    /**
+     * Build a new JSON object by writing its members in a body, with an explicit backend.
+     *
+     * @param backend the backend to build with.
+     * @param body writes the object's members.
+     * @return the builder holding the written object.
+     */
+    public static JsonObjectBuilder<?> object(JsonBackend<?> backend, Consumer<? super JsonObjectBody> body) {
+        JsonObjectBuilder<?> object = object(backend);
+        Objects.requireNonNull(body, "body").accept(object);
+        return object;
+    }
+
+    /**
+     * Build a new JSON array by writing its elements in a body, using the discovered backend.
+     *
+     * @param body writes the array's elements.
+     * @return the builder holding the written array.
+     */
+    public static JsonArrayBuilder<?> array(Consumer<? super JsonArrayBody> body) {
+        return array(defaultBackend(), body);
+    }
+
+    /**
+     * Build a new JSON array by writing its elements in a body, with an explicit backend.
+     *
+     * @param backend the backend to build with.
+     * @param body writes the array's elements.
+     * @return the builder holding the written array.
+     */
+    public static JsonArrayBuilder<?> array(JsonBackend<?> backend, Consumer<? super JsonArrayBody> body) {
+        JsonArrayBuilder<?> array = array(backend);
+        Objects.requireNonNull(body, "body").accept(array);
+        return array;
     }
 
     /**
@@ -132,6 +181,45 @@ public final class Json {
         } catch (IOException | RuntimeException e) {
             throw new JsonException("JSON parsing failed: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Fill a JSON template: {@code ?} outside string literals is a placeholder, bound in order to the values given — a
+     * {@link String}, {@link Number}, {@link Boolean}, {@link java.time.temporal.Temporal}, {@link JsonValue} or
+     * {@link JsonBuilder}, each serialized by the backend, so a string is escaped and a built fragment splices in
+     * whole. The filled text is then parsed strictly, as {@link #parse(String)} would. Use the builder when the shape
+     * itself is computed; use a template when it is written down and only a few values move.
+     *
+     * <pre>{@code
+     * JsonValue result = Json.fill("""
+     *         {
+     *           "protocolVersion": ?,
+     *           "serverInfo": { "name": ?, "version": "1" }
+     *         }
+     *         """, version, name);
+     * }</pre>
+     *
+     * @param template JSON text with {@code ?} placeholders.
+     * @param values one value per placeholder, never {@code null} — JSON {@code null} is never built.
+     * @return the filled document's root value.
+     * @throws IllegalArgumentException if the placeholders and the values differ in number, or a value has a type a
+     *     template cannot take.
+     * @throws JsonException if the filled text is not a single well-formed JSON document.
+     */
+    public static JsonValue fill(String template, Object... values) {
+        return fill(template, defaultBackend(), values);
+    }
+
+    /**
+     * Fill a JSON template with an explicit backend; see {@link #fill(String, Object...)}.
+     *
+     * @param template JSON text with {@code ?} placeholders.
+     * @param backend the backend that serializes the values and parses the result.
+     * @param values one value per placeholder, never {@code null}.
+     * @return the filled document's root value.
+     */
+    public static JsonValue fill(String template, JsonBackend<?> backend, Object... values) {
+        return parse(Templates.fill(template, backend, values), backend);
     }
 
     /**

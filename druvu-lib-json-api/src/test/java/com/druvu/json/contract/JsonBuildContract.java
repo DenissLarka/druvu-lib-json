@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.druvu.json.Json;
+import com.druvu.json.JsonArrayBody;
 import com.druvu.json.JsonArrayBuilder;
 import com.druvu.json.JsonBackend;
 import com.druvu.json.JsonBuilder;
 import com.druvu.json.JsonObject;
+import com.druvu.json.JsonObjectBody;
 import com.druvu.json.JsonValue;
 import com.druvu.json.Mapper;
 import java.io.IOException;
@@ -19,6 +21,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import org.testng.annotations.Test;
 
 /**
@@ -79,6 +82,37 @@ public abstract class JsonBuildContract extends JsonContract {
                 .build();
 
         assertSameTree(built, parse("[\"1\",2,true,{\"NP1\":4},[{},\"AE1\"]]"));
+    }
+
+    @Test
+    public void nestsThroughBodiesAndContinuesAtTheOuterLevel() {
+        JsonValue built = object().add("a", 1)
+                .addObject("o", o -> o.add("x", 1).addArray("arr", a -> a.add(2).addObject(e -> e.add("k", "v"))))
+                .add("after", true)
+                .addArray("empty", a -> {})
+                .build();
+        assertSameTree(built, parse("{\"a\":1,\"o\":{\"x\":1,\"arr\":[2,{\"k\":\"v\"}]},\"after\":true,\"empty\":[]}"));
+    }
+
+    @Test
+    public void aBodyIsWrittenWithStatementsAndConditions() {
+        boolean required = true;
+        JsonValue built = object().addObject("schema", s -> {
+                    s.add("type", "object");
+                    if (required) {
+                        s.addArray("required", r -> r.add("text"));
+                    }
+                })
+                .build();
+        assertSameTree(built, parse("{\"schema\":{\"type\":\"object\",\"required\":[\"text\"]}}"));
+    }
+
+    @Test
+    public void aNullBodyIsRefused() {
+        assertThatThrownBy(() -> object().addObject("o", JsonBuildContract.<Consumer<JsonObjectBody>>unset()))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> array().addArray(JsonBuildContract.<Consumer<JsonArrayBody>>unset()))
+                .isInstanceOf(NullPointerException.class);
     }
 
     @Test

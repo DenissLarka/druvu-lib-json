@@ -48,34 +48,41 @@ one-time authentication setup.
 Building
 --------
 
+Three ways to write JSON, each with its place.
+
+**The chain** — for a flat object or one level of nesting; `end()` returns to the enclosing builder:
+
 ```java
 String json = Json.object()
     .add("prop1", "1")
     .add("prop2", 2)
-    .addObject("prop5")
-        .add("np1", 4)
-        .end()
-    .addArray("prop6")
-        .addObject()
-            .end()
-        .add("ae1")
-        .end()
+    .addObject("prop5").add("np1", 4).end()
+    .addArray("prop6").add("ae1").add("ae2").end()
     .toJson();
+// {"prop1":"1","prop2":2,"prop5":{"np1":4},"prop6":["ae1","ae2"]}
 ```
 
-```json
-{
-    "prop1": "1",
-    "prop2": 2,
-    "prop5": {
-            "np1": 4
-        },
-    "prop6": [
-            {},
-            "ae1"
-        ]
-}
+**A body** — for nesting that goes deeper, or members that depend on a condition. The lambda receives the
+object's or the array's body and writes its members; the chain continues at the outer level. A body has
+no `end()` and no `build()`, nothing but adds, so a missed `end()` cannot misplace a member:
+
+```java
+String json = Json.object()
+    .add("jsonrpc", "2.0")
+    .addObject("error", e -> e.add("code", -32601).add("message", "Method not found"))
+    .toJson();
+
+JsonValue schema = Json.object(s -> {                // a whole document as bodies
+    s.add("type", "object");
+    s.addObject("properties", p -> p.addObject("text", f -> f.add("type", "string")));
+    if (required) {
+        s.addArray("required", r -> r.add("text"));
+    }
+}).build();
 ```
+
+**A template** — for a fixed shape where only a few values move, the JSON itself is the clearest source;
+see [Filling a template](#filling-a-template).
 
 To map your own types while building, a `Mapper` is just a lambda:
 
@@ -118,6 +125,16 @@ The accessors are deliberately strict:
   the rare caller who needs them: `has(key)` is true for a null-valued key, and
   `get(key).isNull()` tells. The write side mirrors it — `null` is refused, never built: omit
   what you do not have.
+- **An optional member has two typed shapes.** `findString(key)`, `findDecimal`, `findInt`,
+  `findLong`, `findBool`, `findObject` and `findArray` return an `Optional`, empty for a missing or
+  null-valued key; `string(key, fallback)`, `decimal`, `intValue`, `longValue` and `bool` with a
+  second argument answer the fallback instead. Both stay strict on kind: a present value of another
+  type throws, as everywhere else.
+
+  ```java
+  String zone = params.string("zone", "UTC");
+  Optional<JsonObject> arguments = params.findObject("arguments");
+  ```
 - **Parsing is strict RFC 8259.** Malformed documents, trailing content, single quotes and
   unquoted keys are refused.
 
@@ -140,6 +157,28 @@ JsonObject built = Json.object().add("a", "b").build().asObject();  // no casts 
 JsonValue instrument = Json.parse(fragment);
 String order = Json.object().add("instrument", instrument).toJson();
 ```
+
+Filling a template
+------------------
+
+When the shape is fixed and only a few values move, the JSON itself is the clearest source. `Json.fill`
+takes JSON text with `?` placeholders outside string literals and binds them in order, each value
+serialized by the backend — a `String`, `Number`, `Boolean`, `Temporal`, `JsonValue` or `JsonBuilder` —
+then parses the result strictly:
+
+```java
+JsonValue result = Json.fill("""
+        {
+          "protocolVersion": ?,
+          "capabilities": { "tools": { "listChanged": false } },
+          "serverInfo": { "name": ?, "version": "1" }
+        }
+        """, version, name);
+```
+
+A string is escaped, a built or parsed fragment splices in whole, `null` is refused, and placeholders
+and values that differ in number are an `IllegalArgumentException` naming the position. Use the builder
+when the shape itself is computed; use a template when it is written down.
 
 YAML
 ----

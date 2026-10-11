@@ -3,7 +3,9 @@ package com.druvu.json;
 import java.io.IOException;
 import java.io.Writer;
 import java.time.temporal.Temporal;
+import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 /**
  * The one-builder implementation behind both builder interfaces. Holds the backend untyped: the node type is an
@@ -135,6 +137,30 @@ final class BuilderImpl<P> implements JsonObjectBuilder<P>, JsonArrayBuilder<P> 
     @Override
     public P end() {
         return parent;
+    }
+
+    @Override
+    public JsonObjectBuilder<P> addObject(String key, Consumer<? super JsonObjectBody> body) {
+        Objects.requireNonNull(body, "body").accept(addObject(key));
+        return this;
+    }
+
+    @Override
+    public JsonObjectBuilder<P> addArray(String key, Consumer<? super JsonArrayBody> body) {
+        Objects.requireNonNull(body, "body").accept(addArray(key));
+        return this;
+    }
+
+    @Override
+    public JsonArrayBuilder<P> addObject(Consumer<? super JsonObjectBody> body) {
+        Objects.requireNonNull(body, "body").accept(addObject());
+        return this;
+    }
+
+    @Override
+    public JsonArrayBuilder<P> addArray(Consumer<? super JsonArrayBody> body) {
+        Objects.requireNonNull(body, "body").accept(addArray());
+        return this;
     }
 
     @Override

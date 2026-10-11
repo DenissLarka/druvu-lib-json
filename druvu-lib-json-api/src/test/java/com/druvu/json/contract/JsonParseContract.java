@@ -87,6 +87,50 @@ public abstract class JsonParseContract extends JsonContract {
     }
 
     @Test
+    public void fallbacksAnswerForMissingAndNullValuedKeys() {
+        JsonObject customer = firstCustomer();
+        assertThat(customer.string("nickname", "none")).isEqualTo("none");
+        assertThat(customer.string("closedAt", "open")).isEqualTo("open");
+        assertThat(customer.string("name", "unused")).isEqualTo("Alice");
+        assertThat(customer.bool("vip", false)).isFalse();
+        assertThat(customer.bool("active", false)).isTrue();
+        assertThat(customer.intValue("rank", 7)).isEqualTo(7);
+        assertThat(customer.longValue("sequence", 0L)).isEqualTo(42L);
+        assertThat(customer.decimal("fee", BigDecimal.ONE)).isEqualTo(BigDecimal.ONE);
+    }
+
+    @Test
+    public void fallbacksStayStrictOnKind() {
+        assertThatThrownBy(() -> firstCustomer().string("sequence", "unused"))
+                .isInstanceOf(JsonException.class)
+                .hasMessageContaining("Expected STRING")
+                .hasMessageContaining("$.customers[0].sequence");
+    }
+
+    @Test
+    public void typedFindsAreEmptyForMissingAndNullValuedKeys() {
+        JsonObject root = parse(PAYLOAD).asObject();
+        JsonObject customer = firstCustomer();
+        assertThat(customer.findString("nickname")).isEmpty();
+        assertThat(customer.findString("closedAt")).isEmpty();
+        assertThat(customer.findString("name")).contains("Alice");
+        assertThat(customer.findBool("active")).contains(true);
+        assertThat(customer.findInt("sequence")).contains(42);
+        assertThat(customer.findLong("sequence")).contains(42L);
+        assertThat(customer.findDecimal("balance")).contains(new BigDecimal("123456789.123456789012345678"));
+        assertThat(customer.findObject("address")).isEmpty();
+        assertThat(root.findArray("customers")).isPresent();
+    }
+
+    @Test
+    public void typedFindsStayStrictOnKind() {
+        assertThatThrownBy(() -> firstCustomer().findObject("name"))
+                .isInstanceOf(JsonException.class)
+                .hasMessageContaining("Expected OBJECT")
+                .hasMessageContaining("found STRING");
+    }
+
+    @Test
     public void missingKeyNamesPathAndPresentKeys() {
         assertThatThrownBy(() -> firstCustomer().get("nope"))
                 .isInstanceOf(JsonException.class)

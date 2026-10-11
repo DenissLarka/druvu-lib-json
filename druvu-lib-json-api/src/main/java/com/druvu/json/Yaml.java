@@ -1,6 +1,7 @@
 package com.druvu.json;
 
 import java.io.Reader;
+import java.util.function.Consumer;
 
 /**
  * The YAML front door: the same builders and the same {@link JsonValue} tree as {@link Json}, over a discovered
@@ -46,6 +47,26 @@ public final class Yaml {
     /** @return a builder for a new sequence, using the discovered backend. */
     public static JsonArrayBuilder<?> array() {
         return Json.array(defaultBackend());
+    }
+
+    /**
+     * Build a new mapping by writing its members in a body, using the discovered backend.
+     *
+     * @param body writes the mapping's members.
+     * @return the builder holding the written mapping.
+     */
+    public static JsonObjectBuilder<?> object(Consumer<? super JsonObjectBody> body) {
+        return Json.object(defaultBackend(), body);
+    }
+
+    /**
+     * Build a new sequence by writing its elements in a body, using the discovered backend.
+     *
+     * @param body writes the sequence's elements.
+     * @return the builder holding the written sequence.
+     */
+    public static JsonArrayBuilder<?> array(Consumer<? super JsonArrayBody> body) {
+        return Json.array(defaultBackend(), body);
     }
 
     /**

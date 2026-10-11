@@ -1,6 +1,7 @@
 package com.druvu.json;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -16,6 +17,10 @@ import java.util.Set;
  *       The raw fact stays reachable — {@link #has(String)} reports a null-valued key as present, and
  *       {@link #get(String)} returns it as a {@linkplain JsonValue#isNull() null value}.
  * </ul>
+ *
+ * <p>An optional member has two typed shapes on top of {@code find}: {@link #findString} and its siblings return an
+ * {@link Optional}, and {@link #string(String, String)} and its siblings answer a fallback instead. Both stay strict on
+ * kind: a present value of another type throws, as everywhere else.
  */
 public final class JsonObject extends BackedValue implements JsonValue {
 
@@ -127,6 +132,114 @@ public final class JsonObject extends BackedValue implements JsonValue {
      */
     public JsonArray array(String key) {
         return get(key).asArray();
+    }
+
+    /**
+     * @param key the member key.
+     * @param fallback the answer when the key is missing or its value is JSON {@code null}.
+     * @return the string under the key, or the fallback; a value of another kind throws.
+     */
+    public String string(String key, String fallback) {
+        return findString(key).orElse(Objects.requireNonNull(fallback, "fallback"));
+    }
+
+    /**
+     * @param key the member key.
+     * @param fallback the answer when the key is missing or its value is JSON {@code null}.
+     * @return the number under the key, or the fallback; a value of another kind throws.
+     */
+    public BigDecimal decimal(String key, BigDecimal fallback) {
+        return findDecimal(key).orElse(Objects.requireNonNull(fallback, "fallback"));
+    }
+
+    /**
+     * @param key the member key.
+     * @param fallback the answer when the key is missing or its value is JSON {@code null}.
+     * @return the exact {@code int} under the key, or the fallback; a value of another kind throws.
+     */
+    public int intValue(String key, int fallback) {
+        return findInt(key).orElse(fallback);
+    }
+
+    /**
+     * @param key the member key.
+     * @param fallback the answer when the key is missing or its value is JSON {@code null}.
+     * @return the exact {@code long} under the key, or the fallback; a value of another kind throws.
+     */
+    public long longValue(String key, long fallback) {
+        return findLong(key).orElse(fallback);
+    }
+
+    /**
+     * @param key the member key.
+     * @param fallback the answer when the key is missing or its value is JSON {@code null}.
+     * @return the boolean under the key, or the fallback; a value of another kind throws.
+     */
+    public boolean bool(String key, boolean fallback) {
+        return findBool(key).orElse(fallback);
+    }
+
+    /**
+     * @param key the member key.
+     * @return the string under a key that may be absent: empty for a missing or null-valued key; a value of another
+     *     kind throws.
+     */
+    public Optional<String> findString(String key) {
+        return find(key).map(JsonValue::asString);
+    }
+
+    /**
+     * @param key the member key.
+     * @return the number under a key that may be absent: empty for a missing or null-valued key; a value of another
+     *     kind throws.
+     */
+    public Optional<BigDecimal> findDecimal(String key) {
+        return find(key).map(JsonValue::asDecimal);
+    }
+
+    /**
+     * @param key the member key.
+     * @return the exact {@code int} under a key that may be absent: empty for a missing or null-valued key; a value of
+     *     another kind, or a number that is not an exact {@code int}, throws.
+     */
+    public Optional<Integer> findInt(String key) {
+        return find(key).map(JsonValue::asInt);
+    }
+
+    /**
+     * @param key the member key.
+     * @return the exact {@code long} under a key that may be absent: empty for a missing or null-valued key; a value of
+     *     another kind, or a number that is not an exact {@code long}, throws.
+     */
+    public Optional<Long> findLong(String key) {
+        return find(key).map(JsonValue::asLong);
+    }
+
+    /**
+     * @param key the member key.
+     * @return the boolean under a key that may be absent: empty for a missing or null-valued key; a value of another
+     *     kind throws.
+     */
+    public Optional<Boolean> findBool(String key) {
+        return find(key).map(JsonValue::asBoolean);
+    }
+
+    /**
+     * @param key the member key.
+     * @return the object under a key that may be absent: empty for a missing or null-valued key; a value of another
+     *     kind throws.
+     */
+    public Optional<JsonObject> findObject(String key) {
+        return find(key).map(JsonValue::asObject);
+    }
+
+    /**
+     * @param key the member key.
+     * @return the array under a key that may be absent: empty for a missing or null-valued key; a value of another kind
+     *     throws.
+     */
+    public Optional<JsonArray> findArray(String key) {
+        return find(key).map(JsonValue::asArray);
     }
 
     private String memberPath(String key) {

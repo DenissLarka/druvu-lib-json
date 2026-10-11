@@ -38,6 +38,17 @@ public class TestGsonBackend {
     }
 
     @Test
+    public void aDocumentWrittenAsBodiesSerializesLikeTheChain() {
+        String json = Json.object(root -> {
+                    root.add("jsonrpc", "2.0");
+                    root.addObject("error", e -> e.add("code", -32601).add("message", "Method not found"));
+                })
+                .toJson();
+        assertThat(json)
+                .isEqualTo("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,\"message\":\"Method not found\"}}");
+    }
+
+    @Test
     public void serializesCompactJsonText() throws IOException {
         JsonBuilder builder = Json.object()
                 .add("Prop1", "1")
