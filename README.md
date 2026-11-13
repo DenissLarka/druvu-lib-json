@@ -27,12 +27,12 @@ Add one JSON backend module; the api comes transitively. The backend's own libra
 <dependency>
   <groupId>com.druvu</groupId>
   <artifactId>druvu-lib-json-gson</artifactId>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
 </dependency>
 <dependency>
   <groupId>com.google.code.gson</groupId>
   <artifactId>gson</artifactId>
-  <version>2.14.0</version>
+  <version>2.15.0</version>
 </dependency>
 ```
 
@@ -305,7 +305,7 @@ opens the form with the right type and scope pre-selected.
 <dependency>
     <groupId>com.druvu</groupId>
     <artifactId>druvu-lib-json-gson</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
 </dependency>
 <!-- or druvu-lib-json-jackson, or druvu-lib-json-yaml -->
 ```
@@ -317,7 +317,7 @@ backend of your own? The contract suite ships as the api's `tests` artifact:
 <dependency>
     <groupId>com.druvu</groupId>
     <artifactId>druvu-lib-json-api</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <type>test-jar</type>
     <scope>test</scope>
 </dependency>
