@@ -231,12 +231,11 @@ public abstract class JsonParseContract extends JsonContract {
 
     @Test
     public void sealedHierarchySupportsPatternMatching() {
-        String described =
-                switch (parse(PAYLOAD)) {
-                    case JsonObject o -> "object with " + o.size() + " members";
-                    case JsonArray a -> "array of " + a.size();
-                    case JsonPrimitive p -> "primitive " + p.kind();
-                };
+        String described = switch (parse(PAYLOAD)) {
+            case JsonObject o -> "object with " + o.size() + " members";
+            case JsonArray a -> "array of " + a.size();
+            case JsonPrimitive p -> "primitive " + p.kind();
+        };
         assertThat(described).isEqualTo("object with 2 members");
     }
 
